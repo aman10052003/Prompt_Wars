@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Rescue Mission — Flipkart Prompt Quality Game</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -12,7 +17,7 @@
   --orange:#F8971D;--orange-dark:#e07b00;--orange-light:#FFB74D;
   --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
   --gray-400:#9ca3af;--gray-600:#4b5563;--gray-800:#1f2937;
-  --green:#10b981;--red:#ef4444;
+  --green:#10b981;--red:#ef4444;--teal:#0d9488;
   --shadow-sm:0 2px 8px rgba(0,0,0,.08);
   --shadow-md:0 4px 20px rgba(0,0,0,.12);
   --shadow-lg:0 8px 40px rgba(0,0,0,.18);
@@ -28,192 +33,229 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @keyframes bgMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 @keyframes matchPop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
-.app-header{background:linear-gradient(90deg,var(--blue-dark),var(--blue-mid) 50%,var(--orange-dark));background-size:200% 200%;animation:bgMove 6s ease infinite;color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 24px rgba(0,0,0,.3);position:sticky;top:0;z-index:100;}
-.header-logo{display:flex;align-items:center;gap:12px;}
-.logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--orange),var(--orange-dark));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;animation:float 3s ease-in-out infinite;box-shadow:0 4px 16px rgba(248,151,29,.4);}
-.header-logo h1{font-size:1.4rem;font-weight:800;letter-spacing:-.5px;}
-.header-logo p{font-size:.75rem;opacity:.85;}
-.header-badge{background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:6px 16px;font-size:.78rem;font-weight:600;color:var(--orange-light);}
-.nlp-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;padding:5px 14px;border-radius:20px;font-size:.75rem;font-weight:700;animation:pulse 2.5s ease-in-out infinite;box-shadow:0 2px 12px rgba(13,148,136,.4);}
+/* SETUP BANNER */
+.setup-banner{position:fixed;top:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(0,0,0,.3);animation:slideDown .4s ease;}
+.setup-banner p{font-size:.82rem;font-weight:600;}
+.setup-banner a{color:#fde68a;text-decoration:underline;font-weight:700;}
+.setup-banner button{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 14px;border-radius:8px;font-family:Poppins,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;}
+.setup-banner button:hover{background:rgba(255,255,255,.3);}
 
+/* FIREBASE STATUS PILL */
+.fb-status{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:.72rem;font-weight:700;transition:all .3s;}
+.fb-status.connecting{background:rgba(255,193,7,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);}
+.fb-status.connected{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.fb-status.error{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+.fb-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.fb-status.connecting .fb-dot{background:#f59e0b;animation:pulse 1s ease infinite;}
+.fb-status.connected .fb-dot{background:var(--green);animation:pulse 2s ease infinite;}
+.fb-status.error .fb-dot{background:var(--red);}
+
+/* HEADER */
+.app-header{background:linear-gradient(90deg,var(--blue-dark),var(--blue-mid) 50%,var(--orange-dark));background-size:200% 200%;animation:bgMove 6s ease infinite;color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,.3);position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+.header-logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--orange),var(--orange-dark));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;animation:float 3s ease-in-out infinite;box-shadow:0 4px 16px rgba(248,151,29,.4);}
+.header-logo h1{font-size:1.3rem;font-weight:800;letter-spacing:-.5px;}
+.header-logo p{font-size:.73rem;opacity:.85;}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.header-badge{background:rgba(255,255,255,.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);border-radius:24px;padding:5px 14px;font-size:.76rem;font-weight:600;color:var(--orange-light);}
+
+/* SCREENS */
 .screen{display:none;}
-.screen.active{display:block;animation:fadeIn .45s ease;}
+.screen.active{display:block;animation:fadeIn .4s ease;}
 .container{max-width:880px;margin:0 auto;padding:28px 18px 60px;}
 
-.card{background:#fff;border-radius:var(--radius);padding:26px 28px;box-shadow:var(--shadow-lg);margin-bottom:18px;}
+/* CARDS */
+.card{background:#fff;border-radius:var(--radius);padding:24px 26px;box-shadow:var(--shadow-lg);margin-bottom:16px;}
 
-.join-hero{text-align:center;padding:42px 28px 34px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);margin-bottom:18px;}
-.hero-emoji{font-size:3.8rem;display:block;margin-bottom:12px;animation:float 3s ease-in-out infinite;}
-.join-hero h2{font-size:1.9rem;font-weight:900;background:linear-gradient(135deg,var(--blue-dark),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
-.join-hero p{color:var(--gray-600);font-size:.92rem;}
+/* JOIN HERO */
+.join-hero{text-align:center;padding:38px 26px 30px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-lg);margin-bottom:16px;}
+.hero-emoji{font-size:3.6rem;display:block;margin-bottom:10px;animation:float 3s ease-in-out infinite;}
+.join-hero h2{font-size:1.85rem;font-weight:900;background:linear-gradient(135deg,var(--blue-dark),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:5px;}
+.join-hero p{color:var(--gray-600);font-size:.9rem;}
 
-.form-group{margin-bottom:16px;}
-.form-group label{display:block;font-weight:600;font-size:.88rem;margin-bottom:7px;color:var(--gray-800);}
-.form-group select,.form-group input{width:100%;padding:13px 16px;border:2px solid var(--gray-200);border-radius:var(--radius-sm);font-family:'Poppins',sans-serif;font-size:.93rem;background:var(--gray-50);color:var(--gray-800);transition:border-color .2s,box-shadow .2s;outline:none;appearance:none;}
+/* FORM */
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-weight:600;font-size:.86rem;margin-bottom:6px;color:var(--gray-800);}
+.form-group select,.form-group input{width:100%;padding:12px 16px;border:2px solid var(--gray-200);border-radius:var(--radius-sm);font-family:'Poppins',sans-serif;font-size:.92rem;background:var(--gray-50);color:var(--gray-800);transition:border-color .2s,box-shadow .2s;outline:none;appearance:none;}
 .form-group select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Cpath fill='%239ca3af' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:44px;}
 .form-group select:focus,.form-group input:focus{border-color:var(--orange);box-shadow:0 0 0 4px rgba(248,151,29,.12);}
 
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border:none;border-radius:var(--radius-sm);font-family:'Poppins',sans-serif;font-size:.93rem;font-weight:700;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 20px;border:none;border-radius:var(--radius-sm);font-family:'Poppins',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
 .btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.15);opacity:0;transition:opacity .2s;}
 .btn:hover::after{opacity:1;}
 .btn:active{transform:scale(.97);}
-.btn-orange{background:linear-gradient(135deg,var(--orange),var(--orange-dark));color:#fff;box-shadow:0 4px 16px rgba(248,151,29,.4);}
-.btn-orange:hover{box-shadow:0 6px 22px rgba(248,151,29,.6);transform:translateY(-1px);}
-.btn-primary{background:linear-gradient(135deg,var(--blue-mid),var(--blue-light));color:#fff;box-shadow:0 4px 16px rgba(26,35,126,.35);}
-.btn-primary:hover{box-shadow:0 6px 22px rgba(26,35,126,.5);transform:translateY(-1px);}
-.btn-green{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 16px rgba(16,185,129,.4);}
-.btn-green:hover{box-shadow:0 6px 22px rgba(16,185,129,.6);transform:translateY(-1px);}
+.btn-orange{background:linear-gradient(135deg,var(--orange),var(--orange-dark));color:#fff;box-shadow:0 4px 14px rgba(248,151,29,.4);}
+.btn-orange:hover{box-shadow:0 6px 20px rgba(248,151,29,.6);transform:translateY(-1px);}
+.btn-primary{background:linear-gradient(135deg,var(--blue-mid),var(--blue-light));color:#fff;box-shadow:0 4px 14px rgba(26,35,126,.35);}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(26,35,126,.5);transform:translateY(-1px);}
+.btn-green{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 4px 14px rgba(16,185,129,.4);}
+.btn-green:hover{box-shadow:0 6px 20px rgba(16,185,129,.6);transform:translateY(-1px);}
+.btn-teal{background:linear-gradient(135deg,#0f766e,var(--teal));color:#fff;box-shadow:0 4px 14px rgba(13,148,136,.4);}
+.btn-teal:hover{box-shadow:0 6px 20px rgba(13,148,136,.6);transform:translateY(-1px);}
 .btn-ghost{background:var(--gray-100);color:var(--gray-600);}
 .btn-ghost:hover{background:var(--gray-200);}
 .btn-full{width:100%;}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
 
-.scenario-preview{background:linear-gradient(135deg,#fff8f0,#fff3e0);border:2px solid var(--orange-light);border-radius:var(--radius);padding:18px 22px;margin-top:14px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
-.scenario-badge{display:inline-flex;align-items:center;gap:6px;background:var(--orange);color:#fff;padding:4px 13px;border-radius:20px;font-size:.76rem;font-weight:700;margin-bottom:8px;}
-.scenario-preview h3{font-size:1rem;font-weight:800;color:var(--blue-dark);margin-bottom:5px;}
-.scenario-preview p{font-size:.85rem;color:var(--gray-600);line-height:1.65;}
-.roll-badge{display:inline-block;background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));color:#fff;padding:3px 13px;border-radius:20px;font-size:.75rem;font-weight:700;margin-bottom:8px;margin-left:6px;}
+/* SCENARIO PREVIEW */
+.scenario-preview{background:linear-gradient(135deg,#fff8f0,#fff3e0);border:2px solid var(--orange-light);border-radius:var(--radius);padding:16px 20px;margin-top:12px;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);}
+.scenario-badge{display:inline-flex;align-items:center;gap:5px;background:var(--orange);color:#fff;padding:3px 12px;border-radius:20px;font-size:.74rem;font-weight:700;margin-bottom:7px;}
+.roll-badge{display:inline-block;background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));color:#fff;padding:3px 12px;border-radius:20px;font-size:.74rem;font-weight:700;margin-bottom:7px;margin-left:5px;}
+.scenario-preview h3{font-size:.98rem;font-weight:800;color:var(--blue-dark);margin-bottom:4px;}
+.scenario-preview p{font-size:.83rem;color:var(--gray-600);line-height:1.62;}
 
-.game-header{background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));color:#fff;border-radius:var(--radius);padding:22px 26px;margin-bottom:18px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;box-shadow:var(--shadow-lg);flex-wrap:wrap;}
-.game-header-info h2{font-size:1.35rem;font-weight:800;margin-bottom:3px;}
-.crisis-badge{display:inline-flex;align-items:center;gap:5px;background:var(--orange);color:#fff;padding:4px 13px;border-radius:20px;font-size:.72rem;font-weight:700;margin-bottom:7px;animation:pulse 2s ease-in-out infinite;}
-
-.timer-container{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
-.timer-circle{width:84px;height:84px;position:relative;}
+/* GAME HEADER */
+.game-header{background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));color:#fff;border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;box-shadow:var(--shadow-lg);flex-wrap:wrap;}
+.game-header-info h2{font-size:1.3rem;font-weight:800;margin-bottom:3px;}
+.crisis-badge{display:inline-flex;align-items:center;gap:5px;background:var(--orange);color:#fff;padding:3px 12px;border-radius:20px;font-size:.7rem;font-weight:700;margin-bottom:6px;animation:pulse 2s ease-in-out infinite;}
+.timer-container{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;}
+.timer-circle{width:82px;height:82px;position:relative;}
 .timer-circle svg{transform:rotate(-90deg);}
 .timer-bg{fill:none;stroke:rgba(255,255,255,.2);stroke-width:6;}
 .timer-fg{fill:none;stroke:var(--orange-light);stroke-width:6;stroke-linecap:round;stroke-dasharray:245;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .5s;}
 .timer-fg.red{stroke:#ff5252;}
 .timer-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.timer-num{font-size:1.25rem;font-weight:800;color:#fff;line-height:1;}
+.timer-num{font-size:1.2rem;font-weight:800;color:#fff;line-height:1;}
 .timer-label{font-size:.58rem;opacity:.8;color:#fff;}
 
-.entry-info-bar{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0f4ff,#e8eeff);border:2px solid #c7d2fe;border-radius:var(--radius-sm);padding:11px 16px;margin-bottom:14px;font-size:.86rem;color:var(--blue-dark);font-weight:600;}
-.entry-info-num{font-size:1.45rem;font-weight:900;color:var(--orange);}
+/* ENTRY INFO */
+.entry-info-bar{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0f4ff,#e8eeff);border:2px solid #c7d2fe;border-radius:var(--radius-sm);padding:10px 15px;margin-bottom:13px;font-size:.84rem;color:var(--blue-dark);font-weight:600;}
+.entry-info-num{font-size:1.4rem;font-weight:900;color:var(--orange);}
 
-.prompt-textarea{width:100%;padding:14px;border:2px solid var(--gray-200);border-radius:var(--radius-sm);font-family:'Poppins',sans-serif;font-size:.9rem;line-height:1.6;resize:vertical;min-height:130px;background:var(--gray-50);color:var(--gray-800);outline:none;transition:border-color .2s,box-shadow .2s;}
+/* PROMPT */
+.prompt-textarea{width:100%;padding:13px;border:2px solid var(--gray-200);border-radius:var(--radius-sm);font-family:'Poppins',sans-serif;font-size:.88rem;line-height:1.6;resize:vertical;min-height:130px;background:var(--gray-50);color:var(--gray-800);outline:none;transition:border-color .2s,box-shadow .2s;}
 .prompt-textarea:focus{border-color:var(--orange);box-shadow:0 0 0 4px rgba(248,151,29,.12);}
 .prompt-textarea:disabled{background:var(--gray-100);color:var(--gray-400);cursor:not-allowed;}
 
-.spinner{width:38px;height:38px;margin:0 auto 12px;border:4px solid var(--gray-200);border-top-color:#0d9488;border-radius:50%;animation:spin .8s linear infinite;}
+/* LOADING */
+.spinner{width:36px;height:36px;margin:0 auto 12px;border:4px solid var(--gray-200);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;}
+.loading-box{text-align:center;padding:24px;}
 
-.score-meter{background:linear-gradient(135deg,#f0f4ff,#e8eeff);border:2px solid var(--blue-light);border-radius:var(--radius);padding:18px 22px;text-align:center;margin-bottom:16px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275);}
-.score-big{font-size:2.6rem;font-weight:900;line-height:1;}
+/* ANALYSIS */
+.score-meter{background:linear-gradient(135deg,#f0f4ff,#e8eeff);border:2px solid var(--blue-light);border-radius:var(--radius);padding:16px 20px;text-align:center;margin-bottom:14px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275);}
+.score-big{font-size:2.5rem;font-weight:900;line-height:1;}
 .score-big.green{background:linear-gradient(135deg,#059669,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .score-big.orange{background:linear-gradient(135deg,var(--orange-dark),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .score-big.red{background:linear-gradient(135deg,#dc2626,var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.score-label{font-size:.8rem;color:var(--gray-600);margin-top:3px;font-weight:600;}
+.score-label{font-size:.78rem;color:var(--gray-600);margin-top:3px;font-weight:600;}
 
-.categories-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
-.cat-card{border-radius:var(--radius-sm);padding:14px 12px;border:2px solid var(--gray-200);background:var(--gray-50);opacity:0;}
+.categories-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:14px;}
+.cat-card{border-radius:var(--radius-sm);padding:12px 11px;border:2px solid var(--gray-200);background:var(--gray-50);opacity:0;}
 .cat-card.matched{border-color:var(--green);background:linear-gradient(135deg,#f0fdf4,#dcfce7);animation:matchPop .4s cubic-bezier(.175,.885,.32,1.275) forwards;}
 .cat-card.unmatched{border-color:var(--gray-200);background:var(--gray-50);animation:fadeIn .4s ease forwards;opacity:.65;}
-.cat-icon-big{font-size:1.5rem;display:block;margin-bottom:5px;}
-.cat-name{font-size:.76rem;font-weight:700;color:var(--gray-800);margin-bottom:4px;}
-.cat-status{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;}
+.cat-icon-big{font-size:1.4rem;display:block;margin-bottom:4px;}
+.cat-name{font-size:.73rem;font-weight:700;color:var(--gray-800);margin-bottom:3px;}
+.cat-status{font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;}
 .cat-card.matched .cat-status{background:var(--green);color:#fff;}
 .cat-card.unmatched .cat-status{background:var(--gray-300);color:#fff;}
-.cat-hits{font-size:.68rem;color:var(--gray-500);line-height:1.45;margin-top:5px;font-style:italic;}
+.cat-hits{font-size:.66rem;color:var(--gray-500);line-height:1.4;margin-top:4px;font-style:italic;}
 .cat-card.matched .cat-hits{color:#059669;font-style:normal;font-weight:600;}
 
-.score-bars{display:flex;flex-direction:column;gap:9px;}
+.score-bars{display:flex;flex-direction:column;gap:8px;}
 .score-bar-row{display:flex;align-items:center;gap:10px;}
-.score-bar-label{font-size:.78rem;font-weight:600;color:var(--gray-600);width:175px;flex-shrink:0;}
-.score-bar-track{flex:1;height:10px;background:var(--gray-200);border-radius:10px;overflow:hidden;}
+.score-bar-label{font-size:.76rem;font-weight:600;color:var(--gray-600);width:170px;flex-shrink:0;}
+.score-bar-track{flex:1;height:9px;background:var(--gray-200);border-radius:10px;overflow:hidden;}
 .score-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--orange),var(--orange-dark));transition:width 1s ease;}
-.score-bar-val{font-size:.78rem;font-weight:700;color:var(--gray-800);width:38px;text-align:right;}
+.score-bar-val{font-size:.76rem;font-weight:700;color:var(--gray-800);width:36px;text-align:right;}
+.score-feedback{background:var(--gray-50);border-radius:var(--radius-sm);padding:10px 14px;margin-top:11px;font-size:.82rem;color:var(--gray-600);line-height:1.6;border-left:4px solid var(--orange);}
 
-.score-feedback{background:var(--gray-50);border-radius:var(--radius-sm);padding:11px 15px;margin-top:12px;font-size:.84rem;color:var(--gray-600);line-height:1.65;border-left:4px solid var(--orange);}
-.score-feedback b{color:var(--gray-800);}
+/* SUCCESS */
+.success-banner{background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:2px solid var(--green);border-radius:var(--radius);padding:20px 24px;text-align:center;margin-top:16px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275);}
+.success-banner h3{font-size:1.2rem;font-weight:800;color:#065f46;margin-bottom:3px;}
+.success-banner p{color:#047857;font-size:.84rem;}
 
-.success-banner{background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:2px solid var(--green);border-radius:var(--radius);padding:22px 26px;text-align:center;margin-top:18px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275);}
-.success-banner .s-icon{font-size:2.6rem;margin-bottom:8px;}
-.success-banner h3{font-size:1.25rem;font-weight:800;color:#065f46;margin-bottom:4px;}
-.success-banner p{color:#047857;font-size:.86rem;}
+.timesup-banner{background:linear-gradient(135deg,#fee2e2,#fecaca);border:2px solid var(--red);border-radius:var(--radius);padding:15px 18px;text-align:center;margin-bottom:13px;animation:popIn .4s ease;}
+.timesup-banner h3{font-size:1.1rem;font-weight:800;color:#991b1b;}
+.timesup-banner p{font-size:.8rem;color:#b91c1c;margin-top:2px;}
 
-.timesup-banner{background:linear-gradient(135deg,#fee2e2,#fecaca);border:2px solid var(--red);border-radius:var(--radius);padding:16px 20px;text-align:center;margin-bottom:14px;animation:popIn .4s ease;}
-.timesup-banner h3{font-size:1.15rem;font-weight:800;color:#991b1b;}
-.timesup-banner p{font-size:.82rem;color:#b91c1c;margin-top:3px;}
+/* HOST */
+.host-header{background:linear-gradient(135deg,var(--blue-dark),var(--blue-mid));color:#fff;border-radius:var(--radius);padding:20px 24px;margin-bottom:16px;box-shadow:var(--shadow-lg);}
+.host-header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+.host-header h2{font-size:1.4rem;font-weight:800;}
+.host-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.host-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;}
+.host-stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);padding:10px 12px;text-align:center;}
+.host-stat .stat-num{font-size:1.55rem;font-weight:900;color:var(--orange-light);}
+.host-stat .stat-label{font-size:.66rem;opacity:.85;margin-top:1px;}
+.progress-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 13px;font-size:.74rem;font-weight:600;color:#fff;margin-top:9px;}
+.pill-fill{width:80px;height:5px;background:rgba(255,255,255,.2);border-radius:6px;overflow:hidden;}
+.pill-inner{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--orange-light),var(--orange));transition:width .8s ease;}
 
-.host-header{background:linear-gradient(135deg,var(--blue-dark),var(--blue-mid));color:#fff;border-radius:var(--radius);padding:22px 26px;margin-bottom:18px;box-shadow:var(--shadow-lg);}
-.host-header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
-.host-header h2{font-size:1.45rem;font-weight:800;}
-.host-actions{display:flex;gap:7px;flex-wrap:wrap;}
-.host-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;}
-.host-stat{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--radius-sm);padding:11px 13px;text-align:center;}
-.host-stat .stat-num{font-size:1.6rem;font-weight:900;color:var(--orange-light);}
-.host-stat .stat-label{font-size:.68rem;opacity:.85;margin-top:1px;}
-.progress-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:5px 14px;font-size:.76rem;font-weight:600;color:#fff;margin-top:10px;}
-.progress-pill .pill-fill{width:80px;height:6px;background:rgba(255,255,255,.2);border-radius:6px;overflow:hidden;}
-.progress-pill .pill-inner{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--orange-light),var(--orange));transition:width .8s ease;}
+/* LIVE BADGE */
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);padding:4px 11px;border-radius:20px;font-size:.7rem;font-weight:700;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.2s ease infinite;display:inline-block;}
 
-.lb-label{font-size:1rem;font-weight:700;color:var(--blue-dark);display:flex;align-items:center;gap:7px;margin-bottom:13px;}
-.team-entry{background:#fff;border-radius:var(--radius);padding:20px 24px;margin-bottom:13px;box-shadow:var(--shadow-md);border-left:6px solid var(--gray-300);transition:box-shadow .2s;animation:fadeIn .4s ease;}
-.team-entry:hover{box-shadow:var(--shadow-lg);}
+/* LEADERBOARD */
+.lb-label{font-size:.98rem;font-weight:700;color:var(--blue-dark);display:flex;align-items:center;gap:7px;margin-bottom:12px;}
+.team-entry{background:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:12px;box-shadow:var(--shadow-md);border-left:6px solid var(--gray-300);transition:all .3s;animation:fadeIn .4s ease;}
+.team-entry:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);}
 .rank-1{border-left-color:#f59e0b!important;}
 .rank-2{border-left-color:#9ca3af!important;}
 .rank-3{border-left-color:#cd7f32!important;}
 .score-green-b{border-left-color:var(--green)!important;}
 .score-orange-b{border-left-color:var(--orange)!important;}
 .score-red-b{border-left-color:var(--red)!important;}
-.te-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
-.te-left{display:flex;align-items:center;gap:11px;}
-.rank-badge{width:40px;height:40px;background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));color:#fff;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:900;flex-shrink:0;}
+.te-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.te-left{display:flex;align-items:center;gap:10px;}
+.rank-badge{width:38px;height:38px;background:linear-gradient(135deg,var(--blue-dark),var(--blue-light));color:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:900;flex-shrink:0;}
 .rank-1 .rank-badge{background:linear-gradient(135deg,#f59e0b,#d97706);}
 .rank-2 .rank-badge{background:linear-gradient(135deg,#9ca3af,#6b7280);}
 .rank-3 .rank-badge{background:linear-gradient(135deg,#cd7f32,#a16207);}
-.te-title h3{font-size:.92rem;font-weight:800;color:var(--gray-800);}
-.te-title p{font-size:.73rem;color:var(--gray-400);margin-top:2px;}
-.score-pill{padding:7px 16px;border-radius:22px;font-size:1rem;font-weight:900;white-space:nowrap;flex-shrink:0;}
+.te-title h3{font-size:.9rem;font-weight:800;color:var(--gray-800);}
+.te-title p{font-size:.71rem;color:var(--gray-400);margin-top:2px;}
+.score-pill{padding:6px 15px;border-radius:20px;font-size:.98rem;font-weight:900;white-space:nowrap;flex-shrink:0;}
 .score-pill.green{background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#065f46;}
 .score-pill.orange{background:linear-gradient(135deg,#ffedd5,#fed7aa);color:#92400e;}
 .score-pill.red{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#991b1b;}
 
-.mini-bars{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
-.mini-bar-row{display:flex;align-items:center;gap:8px;}
-.mini-bar-label{font-size:.72rem;color:var(--gray-500);width:160px;flex-shrink:0;}
-.mini-bar-track{flex:1;height:7px;background:var(--gray-200);border-radius:10px;overflow:hidden;}
+.mini-bars{display:flex;flex-direction:column;gap:5px;margin-top:7px;}
+.mini-bar-row{display:flex;align-items:center;gap:7px;}
+.mini-bar-label{font-size:.7rem;color:var(--gray-500);width:155px;flex-shrink:0;}
+.mini-bar-track{flex:1;height:6px;background:var(--gray-200);border-radius:10px;overflow:hidden;}
 .mini-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--orange),var(--orange-dark));}
-.mini-bar-val{font-size:.7rem;font-weight:700;color:var(--gray-700);width:80px;text-align:right;}
-
-.det-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-400);margin-bottom:4px;margin-top:11px;}
-.collapsible-trigger{cursor:pointer;user-select:none;display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--blue-light);font-weight:600;margin-top:9px;}
+.mini-bar-val{font-size:.68rem;font-weight:700;color:var(--gray-700);width:90px;text-align:right;}
+.det-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-400);margin-bottom:3px;margin-top:10px;}
+.collapsible-trigger{cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;font-size:.76rem;color:var(--blue-light);font-weight:600;margin-top:8px;}
 .collapsible-trigger:hover{color:var(--orange);}
-.collapsible-content{display:none;margin-top:9px;}
+.collapsible-content{display:none;margin-top:8px;}
 .collapsible-content.open{display:block;animation:fadeIn .3s ease;}
 
-.auto-refresh-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.25);padding:4px 11px;border-radius:20px;font-size:.72rem;font-weight:600;}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease-in-out infinite;display:inline-block;}
-.empty-state{text-align:center;padding:52px 28px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-md);}
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 24px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-md);}
 
+/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
-.modal{background:#fff;border-radius:var(--radius);padding:30px;width:330px;max-width:calc(100vw - 36px);box-shadow:var(--shadow-lg);animation:popIn .3s cubic-bezier(.175,.885,.32,1.275);}
-.modal h3{font-size:1.1rem;font-weight:800;margin-bottom:5px;color:var(--blue-dark);}
-.modal p{font-size:.82rem;color:var(--gray-400);margin-bottom:16px;}
-.modal-error{color:var(--red);font-size:.78rem;margin-top:7px;font-weight:600;}
-.modal-actions{display:flex;gap:9px;margin-top:16px;}
+.modal{background:#fff;border-radius:var(--radius);padding:28px;width:330px;max-width:calc(100vw - 32px);box-shadow:var(--shadow-lg);animation:popIn .3s cubic-bezier(.175,.885,.32,1.275);}
+.modal h3{font-size:1.1rem;font-weight:800;margin-bottom:4px;color:var(--blue-dark);}
+.modal p{font-size:.8rem;color:var(--gray-400);margin-bottom:14px;}
+.modal-error{color:var(--red);font-size:.76rem;margin-top:6px;font-weight:600;}
+.modal-actions{display:flex;gap:8px;margin-top:14px;}
 .modal-actions .btn{flex:1;}
 
-#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--gray-800);color:#fff;padding:11px 22px;border-radius:28px;font-size:.84rem;font-weight:600;box-shadow:var(--shadow-lg);z-index:999;transition:transform .35s cubic-bezier(.175,.885,.32,1.275),opacity .35s;opacity:0;white-space:nowrap;max-width:calc(100vw - 36px);text-align:center;}
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--gray-800);color:#fff;padding:10px 20px;border-radius:26px;font-size:.82rem;font-weight:600;box-shadow:var(--shadow-lg);z-index:9999;transition:transform .35s cubic-bezier(.175,.885,.32,1.275),opacity .35s;opacity:0;white-space:nowrap;max-width:calc(100vw - 32px);text-align:center;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 #toast.success{background:linear-gradient(135deg,var(--green),#059669);}
 #toast.error{background:linear-gradient(135deg,var(--red),#dc2626);}
 #toast.info{background:linear-gradient(135deg,var(--blue-mid),var(--blue-light));}
 
 @media(max-width:640px){
-  .container{padding:12px 10px 50px;}
-  .card{padding:16px 14px;}
+  .container{padding:10px 10px 50px;}
+  .card{padding:14px 12px;}
   .categories-grid{grid-template-columns:1fr 1fr 1fr!important;}
   .game-header{flex-direction:column;}
   .timer-container{flex-direction:row;align-items:center;}
-  .score-bar-label{width:120px;font-size:.72rem;}
+  .score-bar-label{width:110px;font-size:.7rem;}
   .modal-actions{flex-direction:column;}
   .host-header-top{flex-direction:column;}
+  .app-header{padding:12px 14px;}
 }
 @media print{
   body{background:#fff!important;}
-  .app-header,.host-actions,.auto-refresh-badge,.btn{display:none!important;}
+  .app-header,.host-actions,.live-badge,.btn,.setup-banner{display:none!important;}
   .collapsible-content{display:block!important;}
   .team-entry{break-inside:avoid;}
   .screen{display:block!important;}
@@ -223,6 +265,13 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 </head>
 <body>
 
+<!-- SETUP BANNER (hidden once configured) -->
+<div id="setupBanner" class="setup-banner" style="display:none;">
+  <p>⚠️ <strong>Firebase not configured.</strong> Open this file, find <code>FIREBASE_CONFIG</code> and paste your project credentials. 
+  <a href="https://console.firebase.google.com/" target="_blank">Get them here →</a></p>
+  <button onclick="document.getElementById('setupBanner').style.display='none'">✕ Dismiss</button>
+</div>
+
 <header class="app-header">
   <div class="header-logo">
     <div class="logo-icon">🚨</div>
@@ -231,8 +280,8 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
       <p>Flipkart Prompt Quality Game</p>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-    <div class="nlp-badge">🔍 NLP Keyword Matcher</div>
+  <div class="header-right">
+    <div id="fbStatus" class="fb-status connecting"><span class="fb-dot"></span> Connecting…</div>
     <div class="header-badge" id="headerBadge">🎮 Ready to Play</div>
   </div>
 </header>
@@ -240,11 +289,10 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 <!-- ===== SCREEN 1: JOIN ===== -->
 <div id="screenJoin" class="screen active">
   <div class="container" style="max-width:500px;">
-
     <div class="join-hero">
       <span class="hero-emoji">🛡️</span>
       <h2>Prompt Quality Challenge</h2>
-      <p>Write the best crisis-response prompt. Our NLP engine scores it instantly across 5 dimensions.</p>
+      <p>Write the best crisis-response prompt. NLP engine scores it across 5 dimensions in real-time.</p>
     </div>
 
     <div class="card">
@@ -261,23 +309,22 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
         </select>
       </div>
       <div id="scenarioPreview" style="display:none;"></div>
-      <div style="margin-top:16px;">
-        <button class="btn btn-orange btn-full" onclick="joinAsTeam()" style="font-size:.98rem;padding:14px;">🏃 Join as Team →</button>
+      <div style="margin-top:14px;">
+        <button class="btn btn-orange btn-full" onclick="joinAsTeam()" style="font-size:.96rem;padding:13px;">🏃 Join as Team →</button>
       </div>
     </div>
 
-    <div class="card" style="background:linear-gradient(135deg,#1a237e,#3949ab);color:#fff;padding:18px 24px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div class="card" style="background:linear-gradient(135deg,#1a237e,#3949ab);color:#fff;padding:16px 22px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <div>
-          <div style="font-size:.78rem;opacity:.7;margin-bottom:2px;">Running the session?</div>
-          <div style="font-size:.98rem;font-weight:800;">🎓 Host / Facilitator Access</div>
+          <div style="font-size:.76rem;opacity:.7;margin-bottom:2px;">Running the session?</div>
+          <div style="font-size:.96rem;font-weight:800;">🎓 Host / Facilitator Access</div>
         </div>
-        <button onclick="hostLogin()" style="background:var(--orange);color:#fff;border:none;border-radius:10px;font-family:Poppins,sans-serif;font-size:.9rem;font-weight:700;padding:11px 20px;cursor:pointer;box-shadow:0 4px 14px rgba(248,151,29,.5);flex-shrink:0;">
+        <button onclick="hostLogin()" style="background:var(--orange);color:#fff;border:none;border-radius:10px;font-family:Poppins,sans-serif;font-size:.88rem;font-weight:700;padding:10px 18px;cursor:pointer;box-shadow:0 4px 14px rgba(248,151,29,.5);flex-shrink:0;">
           Enter Dashboard →
         </button>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -287,19 +334,19 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 
     <div id="timesUpBanner" style="display:none;" class="timesup-banner">
       <h3>⏰ Time's Up!</h3>
-      <p>The 5-minute window has ended. No more submissions accepted.</p>
+      <p>The 5-minute window has ended.</p>
     </div>
 
     <div class="game-header">
       <div class="game-header-info">
         <div class="crisis-badge">🚨 LIVE CRISIS</div>
         <h2 id="gameTeamName"></h2>
-        <div style="font-size:.92rem;opacity:.9;font-weight:600;margin-bottom:5px;" id="gameScenarioTitle"></div>
-        <div style="font-size:.82rem;opacity:.78;line-height:1.6;max-width:540px;" id="gameScenarioDesc"></div>
+        <div style="font-size:.9rem;opacity:.9;font-weight:600;margin-bottom:4px;" id="gameScenarioTitle"></div>
+        <div style="font-size:.8rem;opacity:.76;line-height:1.6;max-width:520px;" id="gameScenarioDesc"></div>
       </div>
       <div class="timer-container">
         <div class="timer-circle">
-          <svg viewBox="0 0 88 88" width="84" height="84">
+          <svg viewBox="0 0 88 88" width="82" height="82">
             <circle class="timer-bg" cx="44" cy="44" r="39"/>
             <circle class="timer-fg" id="timerFg" cx="44" cy="44" r="39"/>
           </svg>
@@ -308,7 +355,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
             <div class="timer-label">LEFT</div>
           </div>
         </div>
-        <button class="btn btn-ghost" style="padding:7px 11px;font-size:.74rem;" onclick="goBack()">← Back</button>
+        <button class="btn btn-ghost" style="padding:6px 10px;font-size:.72rem;" onclick="goBack()">← Back</button>
       </div>
     </div>
 
@@ -316,44 +363,46 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
       <div id="entryInfoBar" class="entry-info-bar" style="display:none;">
         <div class="entry-info-num" id="entryCountNum">0</div>
         <div>
-          <div style="font-weight:700;">Entries submitted by your team</div>
-          <div style="font-size:.73rem;color:var(--gray-500);">Max 15 · Each entry is averaged for your team score</div>
+          <div style="font-weight:700;">Entries already submitted by your team</div>
+          <div style="font-size:.71rem;color:var(--gray-500);">Max 15 · Each entry averaged for team score</div>
         </div>
       </div>
 
-      <div class="form-group" style="margin-bottom:10px;">
+      <div class="form-group" style="margin-bottom:9px;">
         <label>✍️ Your Crisis-Response Prompt</label>
-        <textarea id="promptInput" class="prompt-textarea" rows="6" placeholder="Write your best prompt — include your role, objective, structure, crisis approach, and business impact…" maxlength="1200"></textarea>
-        <div style="font-size:.72rem;color:var(--gray-400);margin-top:3px;text-align:right;"><span id="charCount">0</span>/1200</div>
+        <textarea id="promptInput" class="prompt-textarea" rows="6"
+          placeholder="Write your best prompt — include your role, objective, structure, crisis approach, and business impact…"
+          maxlength="1200"></textarea>
+        <div style="font-size:.7rem;color:var(--gray-400);margin-top:3px;text-align:right;"><span id="charCount">0</span>/1200</div>
       </div>
 
-      <button class="btn btn-full" id="btnAnalyze" onclick="analyzePrompt()" style="background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;font-size:.98rem;padding:14px;box-shadow:0 4px 16px rgba(13,148,136,.4);">
+      <button class="btn btn-teal btn-full" id="btnAnalyze" onclick="analyzePrompt()" style="font-size:.96rem;padding:13px;">
         🔍 Analyze My Prompt
       </button>
 
-      <div id="loadingAnalysis" style="display:none;text-align:center;padding:26px;">
+      <div id="loadingAnalysis" style="display:none;" class="loading-box">
         <div class="spinner"></div>
-        <div style="color:var(--gray-600);font-size:.86rem;font-weight:500;">Scanning for quality keywords…</div>
+        <div style="color:var(--gray-600);font-size:.84rem;font-weight:500;">Scanning for quality keywords…</div>
       </div>
 
-      <div id="analysisSection" style="display:none;margin-top:18px;">
+      <div id="analysisSection" style="display:none;margin-top:16px;">
         <div id="scoreMeterDiv"></div>
         <div class="categories-grid" id="categoriesGrid"></div>
         <div id="scoreBreakdownDiv"></div>
-        <div style="margin-top:18px;text-align:center;">
-          <button class="btn btn-green btn-full" id="btnSubmit" onclick="submitPrompt()" style="font-size:.98rem;padding:14px;">
+        <div style="margin-top:16px;">
+          <button class="btn btn-green btn-full" id="btnSubmit" onclick="submitPrompt()" style="font-size:.96rem;padding:13px;">
             ✅ Submit to Leaderboard
           </button>
-          <div style="font-size:.74rem;color:var(--gray-400);margin-top:7px;">Your entry will be averaged with your team's other entries.</div>
+          <div id="submitStatus" style="font-size:.72rem;color:var(--gray-400);margin-top:6px;text-align:center;">Entry averaged with your team's other submissions.</div>
         </div>
       </div>
     </div>
 
     <div id="successSection" style="display:none;">
       <div class="success-banner">
-        <div class="s-icon">🎉</div>
+        <div style="font-size:2.4rem;margin-bottom:7px;">🎉</div>
         <h3>Submitted!</h3>
-        <p>Your entry is recorded. Your team's leaderboard score reflects the average of all entries.</p>
+        <p>Your entry is live on the host dashboard. Team score updates automatically.</p>
       </div>
       <div id="scorePreviewDiv"></div>
     </div>
@@ -368,14 +417,13 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
       <div class="host-header-top">
         <div>
           <h2>🎓 Host Dashboard</h2>
-          <p style="opacity:.72;font-size:.8rem;margin-top:2px;">Prompt Quality Challenge — Live Results</p>
+          <p style="opacity:.72;font-size:.78rem;margin-top:2px;">Prompt Quality Challenge — Real-time Results</p>
         </div>
         <div class="host-actions">
-          <div class="auto-refresh-badge"><span class="dot"></span>&nbsp;<span id="refreshCountdown">10s</span></div>
-          <button class="btn btn-orange" onclick="refreshDashboard()" style="padding:8px 13px;font-size:.8rem;">🔄 Refresh</button>
-          <button class="btn btn-ghost" onclick="window.print()" style="padding:8px 13px;font-size:.8rem;">🖨️ Print</button>
-          <button class="btn btn-ghost" onclick="clearAllData()" style="padding:8px 13px;font-size:.8rem;color:#fca5a5;">🗑️ Reset</button>
-          <button class="btn btn-ghost" onclick="goBack()" style="padding:8px 13px;font-size:.8rem;color:#fff;">← Exit</button>
+          <div class="live-badge"><span class="live-dot"></span> Live Updates</div>
+          <button class="btn btn-ghost" onclick="window.print()" style="padding:7px 12px;font-size:.78rem;">🖨️ Print</button>
+          <button class="btn btn-ghost" onclick="clearAllData()" style="padding:7px 12px;font-size:.78rem;color:#fca5a5;">🗑️ Reset</button>
+          <button class="btn btn-ghost" onclick="goBack()" style="padding:7px 12px;font-size:.78rem;color:#fff;">← Exit</button>
         </div>
       </div>
       <div class="host-stats">
@@ -392,7 +440,13 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
         </div>
       </div>
     </div>
-    <div id="dashboardContent"></div>
+    <div id="dashboardContent">
+      <div class="empty-state">
+        <span style="font-size:2.8rem;display:block;margin-bottom:10px;">📡</span>
+        <h3 style="font-size:.98rem;font-weight:700;color:var(--gray-600);margin-bottom:4px;">Listening for submissions…</h3>
+        <p style="font-size:.8rem;color:var(--gray-400);">Dashboard updates automatically when teams submit.</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -402,7 +456,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
     <h3>🔐 Host Access</h3>
     <p>Enter the host password to continue.</p>
     <div class="form-group" style="margin-bottom:0;">
-      <input type="password" id="hostPasswordInput" placeholder="Password…" style="letter-spacing:3px;font-size:1rem;"/>
+      <input type="password" id="hostPasswordInput" placeholder="Password…" style="letter-spacing:3px;font-size:.98rem;"/>
     </div>
     <div class="modal-error" id="hostPasswordError" style="display:none;">❌ Incorrect password.</div>
     <div class="modal-actions">
@@ -415,321 +469,495 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 <div id="toast"></div>
 
 <script>
-// ── SCENARIOS ──────────────────────────────────────────────
+// ╔══════════════════════════════════════════════════════╗
+// ║           FIREBASE CONFIGURATION                    ║
+// ║  Replace with YOUR project's config from:           ║
+// ║  console.firebase.google.com →                      ║
+// ║  Project Settings → Your apps → Firebase SDK config ║
+// ╚══════════════════════════════════════════════════════╝
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+
+// ── SCENARIOS ──────────────────────────────────────────
 const SCENARIOS = {
-  1:{ team:"Team 1", rollNos:"01–10", emoji:"💻", title:"Website Crash",           desc:"You are part of the IT operations team at Flipkart. During a major sale event the website crashes due to high traffic. Thousands of users cannot access the platform, causing revenue loss and customer frustration." },
-  2:{ team:"Team 2", rollNos:"11–20", emoji:"💳", title:"Payment Failure Crisis",  desc:"You are in the payment systems team at Flipkart. Customers report payments are deducted but orders are not confirmed. Complaints are rising rapidly and trust is at risk." },
-  3:{ team:"Team 3", rollNos:"21–30", emoji:"📦", title:"Delivery Delays",          desc:"You are in the logistics management team at Flipkart. Orders across multiple cities face unexpected delays. Customers are posting complaints on social media, damaging brand reputation." },
-  4:{ team:"Team 4", rollNos:"31–40", emoji:"🔄", title:"Wrong Product Delivered",  desc:"You are in the order fulfillment team at Flipkart. Customers are receiving incorrect products. Return requests are increasing and operational costs are rising." },
-  5:{ team:"Team 5", rollNos:"41–50", emoji:"📱", title:"App Failure",              desc:"You are in the mobile app team at Flipkart. The app suddenly stops working during peak hours. Users are unable to browse or place orders." },
-  6:{ team:"Team 6", rollNos:"51–67", emoji:"🔒", title:"Data Security Risk",       desc:"You are in the cybersecurity team at Flipkart. Customer data may have been exposed due to a system vulnerability, risking legal consequences and destroying user trust." }
+  1:{ team:"Team 1", rollNos:"01–10", emoji:"💻", title:"Website Crash",            desc:"You are part of the IT operations team at Flipkart. During a major sale event the website crashes due to high traffic. Thousands of users cannot access the platform, causing revenue loss and customer frustration." },
+  2:{ team:"Team 2", rollNos:"11–20", emoji:"💳", title:"Payment Failure Crisis",   desc:"You are in the payment systems team at Flipkart. Customers report payments are deducted but orders are not confirmed. Complaints are rising rapidly and trust is at risk." },
+  3:{ team:"Team 3", rollNos:"21–30", emoji:"📦", title:"Delivery Delays",           desc:"You are in the logistics management team at Flipkart. Orders across multiple cities face unexpected delays. Customers are complaining on social media, damaging brand reputation." },
+  4:{ team:"Team 4", rollNos:"31–40", emoji:"🔄", title:"Wrong Product Delivered",   desc:"You are in the order fulfillment team at Flipkart. Customers are receiving incorrect products. Return requests are increasing and operational costs are rising." },
+  5:{ team:"Team 5", rollNos:"41–50", emoji:"📱", title:"App Failure",               desc:"You are in the mobile app team at Flipkart. The app suddenly stops working during peak hours. Users are unable to browse or place orders." },
+  6:{ team:"Team 6", rollNos:"51–67", emoji:"🔒", title:"Data Security Risk",        desc:"You are in the cybersecurity team at Flipkart. Customer data may have been exposed due to a system vulnerability, risking legal consequences and destroying user trust." }
 };
 
-// ── NLP — 5 PARAMETERS ────────────────────────────────────
+// ── NLP — 5 PARAMETERS ────────────────────────────────
 const PARAMS = {
-  role:{
-    icon:"🎭", label:"Role Definition",
-    kw:["act as","you are","assume the role","as a","expert","specialist","i am","playing the role","my role","as an","position of","i am a","i'm a"]
-  },
-  objective:{
-    icon:"🎯", label:"Clear Objective",
-    kw:["objective","goal","task is","develop a plan","resolve","mitigate","analyze","fix","design","create","aim","purpose","solve","target","achieve","ensure","need to","want to"]
-  },
-  structure:{
-    icon:"📋", label:"Structure & Format",
-    kw:["step-by-step","steps","break it down","divide into","sections","phases","immediate","short-term","long-term","bullet","table","headings","format","numbered","list","framework","outline","first","then","finally","stage","point"]
-  },
-  crisis_handling:{
-    icon:"🚨", label:"Crisis Handling",
-    kw:["immediate actions","mitigation","escalation","fallback","contingency","recovery","failover","rollback","incident","emergency","crisis","triage","downtime","restore","hotfix","workaround","patch","alert","respond","contain","stabilize","isolate"]
-  },
-  business_impact:{
-    icon:"💼", label:"Business Impact",
-    kw:["revenue","customer experience","user retention","brand reputation","trust","loss","cost","impact","conversion","churn","profit","financial","sales","stakeholder","customer satisfaction","refund","compensation","sla","kpi"]
-  }
+  role:{          icon:"🎭", label:"Role Definition",    kw:["act as","you are","assume the role","as a","expert","specialist","i am","my role","as an","i'm a","playing the role"] },
+  objective:{     icon:"🎯", label:"Clear Objective",    kw:["objective","goal","task is","develop a plan","resolve","mitigate","analyze","fix","design","create","aim","purpose","solve","target","achieve","ensure","need to","want to"] },
+  structure:{     icon:"📋", label:"Structure & Format", kw:["step-by-step","steps","break it down","divide into","sections","phases","immediate","short-term","long-term","bullet","table","headings","format","numbered","list","framework","outline","first","then","finally","stage"] },
+  crisis_handling:{icon:"🚨",label:"Crisis Handling",    kw:["immediate actions","mitigation","escalation","fallback","contingency","recovery","failover","rollback","incident","emergency","crisis","triage","downtime","restore","hotfix","workaround","patch","alert","respond","contain","stabilize"] },
+  business_impact:{icon:"💼",label:"Business Impact",    kw:["revenue","customer experience","user retention","brand reputation","trust","loss","cost","impact","conversion","churn","profit","financial","sales","stakeholder","customer satisfaction","refund","compensation","sla","kpi"] }
 };
 
-const PTS_EACH   = 2;
-const MAX_SCORE  = Object.keys(PARAMS).length * PTS_EACH; // 10
-const HOST_PW    = "host123";
+const PTS_EACH    = 2;
+const MAX_SCORE   = Object.keys(PARAMS).length * PTS_EACH; // 10
+const HOST_PW     = "host123";
 const TOTAL_TEAMS = 6;
 const MAX_ENTRIES = 15;
-const SK = (t) => `rqg_v3_team_${t}`;
+const DB_PATH     = "rescue_game"; // root path in Firebase
 
-// ── STATE ──────────────────────────────────────────────────
-let currentTeam=null, analysisResult=null;
-let timerInterval=null, timeLeft=300, timerExpired=false;
-let hostRefInt=null, hostRefCd=10;
+// ── STATE ──────────────────────────────────────────────
+let db = null;
+let fbReady = false;
+let currentTeam = null, analysisResult = null;
+let timerInterval = null, timeLeft = 300, timerExpired = false;
+let hostListener = null;
 
-// ── UTILS ──────────────────────────────────────────────────
-function showScreen(n){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('screen'+n).classList.add('active'); }
-function goBack(){ clearInterval(timerInterval); clearInterval(hostRefInt); currentTeam=null; analysisResult=null; timerExpired=false; document.getElementById('headerBadge').textContent='🎮 Ready to Play'; showScreen('Join'); }
-function esc(s){ if(!s)return''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-let _tt;
-function toast(msg,type='info',ms=3000){ const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type; clearTimeout(_tt); _tt=setTimeout(()=>{t.className='';},ms); }
-
-function getTeamData(t){ try{ return JSON.parse(localStorage.getItem(SK(t)))||{entries:[]}; }catch(e){ return{entries:[]}; } }
-function saveTeamData(t,d){ localStorage.setItem(SK(t),JSON.stringify(d)); }
-function teamAvgScore(d){ if(!d.entries||!d.entries.length)return null; return d.entries.reduce((a,b)=>a+(b.scores?.total||0),0)/d.entries.length; }
-function teamAvgCats(d){ if(!d.entries||!d.entries.length)return null; return d.entries.reduce((a,b)=>a+(b.matchedCount||0),0)/d.entries.length; }
-
-// ── JOIN ──────────────────────────────────────────────────
-function onTeamSelect(){
-  const v=parseInt(document.getElementById('teamSelect').value);
-  const pv=document.getElementById('scenarioPreview');
-  if(!v||!SCENARIOS[v]){pv.style.display='none';return;}
-  const s=SCENARIOS[v], d=getTeamData(v), n=d.entries.length;
-  pv.innerHTML=`<div class="scenario-preview">
-    <span class="scenario-badge">${s.emoji} ${s.team}</span>
-    <span class="roll-badge">Roll No. ${s.rollNos}</span>
-    <h3 style="margin-top:9px;">${s.title}</h3>
-    <p>${s.desc}</p>
-    ${n>0?`<p style="margin-top:8px;font-size:.76rem;color:var(--gray-600);font-weight:600;">📊 ${n} entr${n===1?'y':'ies'} submitted (max ${MAX_ENTRIES})</p>`:''}
-  </div>`;
-  pv.style.display='block';
+// ── FIREBASE INIT ──────────────────────────────────────
+function initFirebase() {
+  const isPlaceholder = FIREBASE_CONFIG.apiKey === "YOUR_API_KEY";
+  if (isPlaceholder) {
+    document.getElementById('setupBanner').style.display = 'flex';
+    setFbStatus('error', '⚠️ Not configured');
+    // Fall back to localStorage so app still works locally
+    fbReady = false;
+    return;
+  }
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    // Test connection
+    db.ref('.info/connected').on('value', snap => {
+      if (snap.val() === true) {
+        fbReady = true;
+        setFbStatus('connected', '🔴 Live');
+      } else {
+        fbReady = false;
+        setFbStatus('connecting', 'Connecting…');
+      }
+    });
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    setFbStatus('error', '❌ Error');
+    fbReady = false;
+  }
 }
 
-function joinAsTeam(){
-  const v=parseInt(document.getElementById('teamSelect').value);
-  if(!v||!SCENARIOS[v]){toast('Please select your team first!','error');return;}
-  const d=getTeamData(v);
-  if(d.entries.length>=MAX_ENTRIES){toast(`Team already reached ${MAX_ENTRIES}-entry limit!`,'error',4000);return;}
-  currentTeam=v;
-  setupGame(v);
+function setFbStatus(type, text) {
+  const el = document.getElementById('fbStatus');
+  el.className = `fb-status ${type}`;
+  el.innerHTML = `<span class="fb-dot"></span> ${text}`;
+}
+
+// ── STORAGE LAYER (Firebase + localStorage fallback) ───
+async function getTeamEntryCount(teamNum) {
+  if (!fbReady) {
+    const d = lsGet(teamNum);
+    return d.entries ? d.entries.length : 0;
+  }
+  const snap = await db.ref(`${DB_PATH}/teams/${teamNum}/entries`).once('value');
+  if (!snap.exists()) return 0;
+  return Object.keys(snap.val()).length;
+}
+
+async function pushEntry(teamNum, entry) {
+  if (!fbReady) {
+    // localStorage fallback
+    const d = lsGet(teamNum);
+    if (!d.entries) d.entries = [];
+    d.entries.push(entry);
+    d.teamNum = teamNum;
+    d.teamName = SCENARIOS[teamNum].team;
+    d.rollNos = SCENARIOS[teamNum].rollNos;
+    d.scenarioTitle = SCENARIOS[teamNum].title;
+    lsSet(teamNum, d);
+    return true;
+  }
+  const meta = {
+    teamNum, teamName: SCENARIOS[teamNum].team,
+    rollNos: SCENARIOS[teamNum].rollNos,
+    scenarioTitle: SCENARIOS[teamNum].title
+  };
+  await db.ref(`${DB_PATH}/teams/${teamNum}/meta`).set(meta);
+  await db.ref(`${DB_PATH}/teams/${teamNum}/entries`).push(entry);
+  return true;
+}
+
+// localStorage helpers (fallback)
+function lsGet(t) { try { return JSON.parse(localStorage.getItem(`rqg_team_${t}`)) || {}; } catch(e) { return {}; } }
+function lsSet(t, d) { localStorage.setItem(`rqg_team_${t}`, JSON.stringify(d)); }
+
+// ── HOST: Real-time listener ───────────────────────────
+function attachHostListener() {
+  if (!fbReady) {
+    // localStorage fallback: just render once
+    renderDashboardFromLS();
+    return;
+  }
+  // Detach any existing listener
+  if (hostListener) {
+    db.ref(`${DB_PATH}/teams`).off('value', hostListener);
+  }
+  hostListener = db.ref(`${DB_PATH}/teams`).on('value', snap => {
+    const raw = snap.exists() ? snap.val() : {};
+    renderDashboard(raw);
+  }, err => {
+    console.error('Host listener error:', err);
+    toast('⚠️ Real-time sync error. Check Firebase rules.', 'error', 5000);
+  });
+}
+
+function detachHostListener() {
+  if (fbReady && hostListener) {
+    db.ref(`${DB_PATH}/teams`).off('value', hostListener);
+    hostListener = null;
+  }
+}
+
+async function clearAllData() {
+  if (!confirm('Delete ALL submissions from Firebase? This cannot be undone.')) return;
+  if (fbReady) {
+    await db.ref(`${DB_PATH}/teams`).remove();
+  } else {
+    for (let i = 1; i <= TOTAL_TEAMS; i++) localStorage.removeItem(`rqg_team_${i}`);
+    renderDashboardFromLS();
+  }
+  toast('🗑️ All data cleared!', 'info');
+}
+
+// ── UTILS ──────────────────────────────────────────────
+function showScreen(n) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('screen' + n).classList.add('active'); }
+function goBack() {
+  clearInterval(timerInterval);
+  detachHostListener();
+  currentTeam = null; analysisResult = null; timerExpired = false;
+  document.getElementById('headerBadge').textContent = '🎮 Ready to Play';
+  showScreen('Join');
+}
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let _tt;
+function toast(msg, type = 'info', ms = 3000) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'show ' + type; clearTimeout(_tt); _tt = setTimeout(() => { t.className = ''; }, ms); }
+
+// ── JOIN ───────────────────────────────────────────────
+function onTeamSelect() {
+  const v = parseInt(document.getElementById('teamSelect').value);
+  const pv = document.getElementById('scenarioPreview');
+  if (!v || !SCENARIOS[v]) { pv.style.display = 'none'; return; }
+  const s = SCENARIOS[v];
+  pv.innerHTML = `<div class="scenario-preview">
+    <span class="scenario-badge">${s.emoji} ${s.team}</span>
+    <span class="roll-badge">Roll No. ${s.rollNos}</span>
+    <h3 style="margin-top:8px;">${s.title}</h3>
+    <p>${s.desc}</p>
+  </div>`;
+  pv.style.display = 'block';
+}
+
+async function joinAsTeam() {
+  const v = parseInt(document.getElementById('teamSelect').value);
+  if (!v || !SCENARIOS[v]) { toast('Please select your team first!', 'error'); return; }
+  const count = await getTeamEntryCount(v);
+  if (count >= MAX_ENTRIES) { toast(`Team already reached the ${MAX_ENTRIES}-entry limit!`, 'error', 4000); return; }
+  currentTeam = v;
+  setupGame(v, count);
   showScreen('Game');
 }
 
-// ── GAME SETUP ────────────────────────────────────────────
-function setupGame(t){
-  const s=SCENARIOS[t];
-  document.getElementById('gameTeamName').textContent=`${s.emoji} ${s.team} — Roll No. ${s.rollNos}`;
-  document.getElementById('gameScenarioTitle').textContent=s.title;
-  document.getElementById('gameScenarioDesc').textContent=s.desc;
-  document.getElementById('headerBadge').textContent=`${s.emoji} ${s.team}`;
-  document.getElementById('analysisSection').style.display='none';
-  document.getElementById('loadingAnalysis').style.display='none';
-  document.getElementById('successSection').style.display='none';
-  document.getElementById('timesUpBanner').style.display='none';
-  document.getElementById('mainGameCard').style.display='block';
-  const d=getTeamData(t), n=d.entries.length;
-  if(n>0){ document.getElementById('entryInfoBar').style.display='flex'; document.getElementById('entryCountNum').textContent=n; }
-  else { document.getElementById('entryInfoBar').style.display='none'; }
-  const pi=document.getElementById('promptInput');
-  pi.value=''; pi.disabled=false; pi.oninput=()=>{ document.getElementById('charCount').textContent=pi.value.length; };
-  document.getElementById('charCount').textContent='0';
-  document.getElementById('btnAnalyze').disabled=false;
-  const bs=document.getElementById('btnSubmit'); if(bs) bs.disabled=false;
-  analysisResult=null;
+// ── GAME ───────────────────────────────────────────────
+function setupGame(t, existingCount) {
+  const s = SCENARIOS[t];
+  document.getElementById('gameTeamName').textContent    = `${s.emoji} ${s.team} — Roll No. ${s.rollNos}`;
+  document.getElementById('gameScenarioTitle').textContent = s.title;
+  document.getElementById('gameScenarioDesc').textContent  = s.desc;
+  document.getElementById('headerBadge').textContent       = `${s.emoji} ${s.team}`;
+  document.getElementById('analysisSection').style.display = 'none';
+  document.getElementById('loadingAnalysis').style.display = 'none';
+  document.getElementById('successSection').style.display  = 'none';
+  document.getElementById('timesUpBanner').style.display   = 'none';
+  document.getElementById('mainGameCard').style.display    = 'block';
+  if (existingCount > 0) {
+    document.getElementById('entryInfoBar').style.display  = 'flex';
+    document.getElementById('entryCountNum').textContent   = existingCount;
+  } else {
+    document.getElementById('entryInfoBar').style.display  = 'none';
+  }
+  const pi = document.getElementById('promptInput');
+  pi.value = ''; pi.disabled = false;
+  pi.oninput = () => { document.getElementById('charCount').textContent = pi.value.length; };
+  document.getElementById('charCount').textContent = '0';
+  document.getElementById('btnAnalyze').disabled = false;
+  const bs = document.getElementById('btnSubmit'); if (bs) bs.disabled = false;
+  analysisResult = null;
   startTimer();
 }
 
-// ── TIMER ──────────────────────────────────────────────────
-function startTimer(){
-  timeLeft=300; timerExpired=false; clearInterval(timerInterval);
+// ── TIMER ──────────────────────────────────────────────
+function startTimer() {
+  timeLeft = 300; timerExpired = false; clearInterval(timerInterval);
   updTimer();
-  timerInterval=setInterval(()=>{ timeLeft--; updTimer(); if(timeLeft<=0){clearInterval(timerInterval);timerExpired=true;onTimeUp();} },1000);
+  timerInterval = setInterval(() => { timeLeft--; updTimer(); if (timeLeft <= 0) { clearInterval(timerInterval); timerExpired = true; onTimeUp(); } }, 1000);
 }
-function updTimer(){
-  const m=Math.floor(timeLeft/60),s=timeLeft%60;
-  document.getElementById('timerNum').textContent=`${m}:${s.toString().padStart(2,'0')}`;
-  const c=2*Math.PI*39, off=c*(1-timeLeft/300), fg=document.getElementById('timerFg');
-  fg.style.strokeDasharray=c; fg.style.strokeDashoffset=off;
-  if(timeLeft<=60){fg.classList.add('red');document.getElementById('timerNum').style.color='#ff5252';}
-  else{fg.classList.remove('red');document.getElementById('timerNum').style.color='#fff';}
+function updTimer() {
+  const m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+  document.getElementById('timerNum').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  const c = 2 * Math.PI * 39, off = c * (1 - timeLeft / 300), fg = document.getElementById('timerFg');
+  fg.style.strokeDasharray = c; fg.style.strokeDashoffset = off;
+  if (timeLeft <= 60) { fg.classList.add('red'); document.getElementById('timerNum').style.color = '#ff5252'; }
+  else { fg.classList.remove('red'); document.getElementById('timerNum').style.color = '#fff'; }
 }
-function onTimeUp(){
-  document.getElementById('timesUpBanner').style.display='block';
-  document.getElementById('promptInput').disabled=true;
-  document.getElementById('btnAnalyze').disabled=true;
-  const bs=document.getElementById('btnSubmit'); if(bs) bs.disabled=true;
-  toast("⏰ Time's up!",'error',5000);
+function onTimeUp() {
+  document.getElementById('timesUpBanner').style.display = 'block';
+  document.getElementById('promptInput').disabled = true;
+  document.getElementById('btnAnalyze').disabled = true;
+  const bs = document.getElementById('btnSubmit'); if (bs) bs.disabled = true;
+  toast("⏰ Time's up!", 'error', 5000);
 }
 
-// ── NLP ───────────────────────────────────────────────────
-function matchKw(prompt){
-  const pl=prompt.toLowerCase(), res={};
-  for(const[k,d] of Object.entries(PARAMS)){
-    const hits=d.kw.filter(w=>pl.includes(w));
-    res[k]={matched:hits.length>0,hits};
+// ── NLP ────────────────────────────────────────────────
+function matchKw(prompt) {
+  const pl = prompt.toLowerCase(), res = {};
+  for (const [k, d] of Object.entries(PARAMS)) {
+    const hits = d.kw.filter(w => pl.includes(w));
+    res[k] = { matched: hits.length > 0, hits };
   }
   return res;
 }
-function calcScores(mr){
-  const s={};let total=0;
-  for(const k of Object.keys(PARAMS)){ s[k]=mr[k].matched?PTS_EACH:0; total+=s[k]; }
-  s.total=total; return s;
+function calcScores(mr) {
+  const s = {}; let total = 0;
+  for (const k of Object.keys(PARAMS)) { s[k] = mr[k].matched ? PTS_EACH : 0; total += s[k]; }
+  s.total = total; return s;
 }
-function makeFeedback(mr,scores){
-  const t=scores.total;
-  const miss=Object.entries(mr).filter(([,v])=>!v.matched).map(([k])=>PARAMS[k].label);
-  let fb=t>=10?'Perfect score! All 5 dimensions covered.':t>=8?'Excellent! Almost all dimensions covered.':t>=6?'Good effort! A couple more dimensions would help.':t>=4?'Decent start. Try adding more structure and business context.':'Needs more depth. Include role, objective, and crisis approach.';
-  if(miss.length) fb+=` Missing: ${miss.join(', ')}.`;
+function makeFeedback(mr, scores) {
+  const t = scores.total;
+  const miss = Object.entries(mr).filter(([, v]) => !v.matched).map(([k]) => PARAMS[k].label);
+  let fb = t >= 10 ? 'Perfect! All 5 dimensions covered.' : t >= 8 ? 'Excellent! Almost all dimensions.' : t >= 6 ? 'Good effort. A couple more dimensions would help.' : t >= 4 ? 'Decent start. Add more structure and business context.' : 'Needs more depth — role, objective, and crisis approach.';
+  if (miss.length) fb += ` Missing: ${miss.join(', ')}.`;
   return fb;
 }
 
-// ── ANALYZE ───────────────────────────────────────────────
-function analyzePrompt(){
-  if(timerExpired){toast("⏰ Time's up!",'error');return;}
-  const prompt=document.getElementById('promptInput').value.trim();
-  if(prompt.length<15){toast('Write a longer prompt first (min 15 chars)','error');return;}
-  document.getElementById('promptInput').disabled=true;
-  document.getElementById('btnAnalyze').disabled=true;
-  document.getElementById('analysisSection').style.display='none';
-  document.getElementById('loadingAnalysis').style.display='block';
-  setTimeout(()=>{
-    const mr=matchKw(prompt), scores=calcScores(mr);
-    scores.feedback=makeFeedback(mr,scores);
-    analysisResult={mr,scores,prompt};
-    document.getElementById('loadingAnalysis').style.display='none';
-    renderAnalysis(mr,scores);
-    document.getElementById('analysisSection').style.display='block';
-    const m=Object.values(mr).filter(v=>v.matched).length;
-    toast(`✅ Done! ${m}/5 categories matched.`,'success');
-  },700);
+// ── ANALYZE ────────────────────────────────────────────
+function analyzePrompt() {
+  if (timerExpired) { toast("⏰ Time's up!", 'error'); return; }
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (prompt.length < 15) { toast('Write a longer prompt first (min 15 chars)', 'error'); return; }
+  document.getElementById('promptInput').disabled = true;
+  document.getElementById('btnAnalyze').disabled = true;
+  document.getElementById('analysisSection').style.display = 'none';
+  document.getElementById('loadingAnalysis').style.display = 'block';
+  setTimeout(() => {
+    const mr = matchKw(prompt), scores = calcScores(mr);
+    scores.feedback = makeFeedback(mr, scores);
+    analysisResult = { mr, scores, prompt };
+    document.getElementById('loadingAnalysis').style.display = 'none';
+    renderAnalysis(mr, scores);
+    document.getElementById('analysisSection').style.display = 'block';
+    const m = Object.values(mr).filter(v => v.matched).length;
+    toast(`✅ Done! ${m}/5 categories matched.`, 'success');
+  }, 700);
 }
 
-function renderAnalysis(mr,scores){
-  const t=scores.total, cc=t>=8?'green':t>=4?'orange':'red', em=t>=8?'🏆':t>=4?'📈':'📉';
-  document.getElementById('scoreMeterDiv').innerHTML=`<div class="score-meter"><div class="score-big ${cc}">${em} ${t}/${MAX_SCORE}</div><div class="score-label">Prompt Quality Score</div></div>`;
-
-  const grid=document.getElementById('categoriesGrid'); grid.innerHTML='';
-  let delay=0;
-  for(const[k,d] of Object.entries(PARAMS)){
-    const m=mr[k], c=document.createElement('div');
-    c.className=`cat-card ${m.matched?'matched':'unmatched'}`;
-    c.style.animationDelay=`${delay}s`;
-    c.innerHTML=`<span class="cat-icon-big">${d.icon}</span><div class="cat-name">${d.label}</div><span class="cat-status">${m.matched?'✓ Hit':'✗ Miss'}</span><div class="cat-hits">${m.matched?`"${m.hits.slice(0,2).map(esc).join('", "')}"`:'-'}</div>`;
-    grid.appendChild(c); delay+=0.08;
+function renderAnalysis(mr, scores) {
+  const t = scores.total, cc = t >= 8 ? 'green' : t >= 4 ? 'orange' : 'red', em = t >= 8 ? '🏆' : t >= 4 ? '📈' : '📉';
+  document.getElementById('scoreMeterDiv').innerHTML = `<div class="score-meter"><div class="score-big ${cc}">${em} ${t}/${MAX_SCORE}</div><div class="score-label">Prompt Quality Score</div></div>`;
+  const grid = document.getElementById('categoriesGrid'); grid.innerHTML = '';
+  let delay = 0;
+  for (const [k, d] of Object.entries(PARAMS)) {
+    const m = mr[k], c = document.createElement('div');
+    c.className = `cat-card ${m.matched ? 'matched' : 'unmatched'}`;
+    c.style.animationDelay = `${delay}s`;
+    c.innerHTML = `<span class="cat-icon-big">${d.icon}</span><div class="cat-name">${d.label}</div><span class="cat-status">${m.matched ? '✓ Hit' : '✗ Miss'}</span><div class="cat-hits">${m.matched ? `"${m.hits.slice(0, 2).map(esc).join('", "')}"` : '-'}</div>`;
+    grid.appendChild(c); delay += 0.08;
   }
-
-  const bars=Object.entries(PARAMS).map(([k,d])=>{
-    const v=scores[k]||0, pct=(v/PTS_EACH)*100;
-    return `<div class="score-bar-row"><div class="score-bar-label">${d.icon} ${d.label}</div><div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%;"></div></div><div class="score-bar-val">${v}/${PTS_EACH}</div></div>`;
-  }).join('');
-  document.getElementById('scoreBreakdownDiv').innerHTML=`<div style="margin-top:6px;"><div style="font-size:.86rem;font-weight:700;color:var(--blue-dark);margin-bottom:9px;">📊 Score Breakdown</div><div class="score-bars">${bars}</div>${scores.feedback?`<div class="score-feedback"><b>💬 Feedback:</b> ${esc(scores.feedback)}</div>`:''}</div>`;
+  const bars = Object.entries(PARAMS).map(([k, d]) => { const v = scores[k] || 0, pct = (v / PTS_EACH) * 100; return `<div class="score-bar-row"><div class="score-bar-label">${d.icon} ${d.label}</div><div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%;"></div></div><div class="score-bar-val">${v}/${PTS_EACH}</div></div>`; }).join('');
+  document.getElementById('scoreBreakdownDiv').innerHTML = `<div style="margin-top:5px;"><div style="font-size:.84rem;font-weight:700;color:var(--blue-dark);margin-bottom:8px;">📊 Score Breakdown</div><div class="score-bars">${bars}</div>${scores.feedback ? `<div class="score-feedback"><b>💬 Feedback:</b> ${esc(scores.feedback)}</div>` : ''}</div>`;
 }
 
-// ── SUBMIT ────────────────────────────────────────────────
-function submitPrompt(){
-  if(timerExpired){toast("⏰ Time's up!",'error');return;}
-  if(!analysisResult){toast('Analyze first!','error');return;}
-  const d=getTeamData(currentTeam);
-  if(d.entries.length>=MAX_ENTRIES){toast(`Max ${MAX_ENTRIES} entries reached!`,'error',4000);return;}
-  document.getElementById('btnSubmit').disabled=true;
-  const {mr,scores,prompt}=analysisResult;
-  const mc=Object.values(mr).filter(v=>v.matched).length;
-  const s=SCENARIOS[currentTeam];
-  d.entries.push({ scenarioTitle:s.title, prompt, matchedCats:Object.fromEntries(Object.entries(mr).map(([k,v])=>[k,{matched:v.matched,hits:v.hits}])), matchedCount:mc, scores, ts:Date.now() });
-  d.teamNum=currentTeam; d.teamName=s.team; d.rollNos=s.rollNos; d.scenarioTitle=s.title;
-  saveTeamData(currentTeam,d);
-  clearInterval(timerInterval);
-  document.getElementById('mainGameCard').style.display='none';
-  document.getElementById('successSection').style.display='block';
-  renderSuccessCard(scores,mc,mr,d.entries.length);
-  toast('🎉 Submitted!','success',4000);
+// ── SUBMIT ─────────────────────────────────────────────
+async function submitPrompt() {
+  if (timerExpired) { toast("⏰ Time's up!", 'error'); return; }
+  if (!analysisResult) { toast('Analyze your prompt first!', 'error'); return; }
+
+  const btnSubmit = document.getElementById('btnSubmit');
+  const statusEl  = document.getElementById('submitStatus');
+  btnSubmit.disabled = true;
+  btnSubmit.textContent = '⏳ Saving…';
+  statusEl.textContent = fbReady ? 'Sending to Firebase…' : 'Saving locally…';
+
+  // Check cap
+  const count = await getTeamEntryCount(currentTeam);
+  if (count >= MAX_ENTRIES) { toast(`Max ${MAX_ENTRIES} entries reached!`, 'error', 4000); btnSubmit.disabled = false; btnSubmit.textContent = '✅ Submit to Leaderboard'; return; }
+
+  const { mr, scores, prompt } = analysisResult;
+  const mc = Object.values(mr).filter(v => v.matched).length;
+  const entry = {
+    prompt,
+    matchedCats: Object.fromEntries(Object.entries(mr).map(([k, v]) => [k, { matched: v.matched, hits: v.hits }])),
+    matchedCount: mc,
+    scores: { ...scores },
+    ts: Date.now()
+  };
+
+  try {
+    await pushEntry(currentTeam, entry);
+    clearInterval(timerInterval);
+    document.getElementById('mainGameCard').style.display = 'none';
+    document.getElementById('successSection').style.display = 'block';
+    renderSuccessCard(scores, mc, mr, count + 1);
+    toast('🎉 Submitted! Live on host dashboard.', 'success', 4000);
+  } catch(e) {
+    console.error('Submit error:', e);
+    toast('❌ Submit failed: ' + e.message, 'error', 5000);
+    btnSubmit.disabled = false;
+    btnSubmit.textContent = '✅ Submit to Leaderboard';
+    statusEl.textContent = 'Failed. Check Firebase rules (allow read/write).';
+  }
 }
 
-function renderSuccessCard(scores,mc,mr,n){
-  const t=scores.total||0, cc=t>=8?'green':t>=4?'orange':'red';
-  const bars=Object.entries(PARAMS).map(([k,d])=>{ const v=scores[k]||0,pct=(v/PTS_EACH)*100; return `<div class="score-bar-row"><div class="score-bar-label">${d.icon} ${d.label}</div><div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%;"></div></div><div class="score-bar-val">${v}/${PTS_EACH}</div></div>`; }).join('');
-  document.getElementById('scorePreviewDiv').innerHTML=`<div class="card" style="margin-top:16px;">
-    <div style="text-align:center;margin-bottom:14px;">
-      <div style="display:inline-block;padding:10px 26px;border-radius:38px;font-size:1.4rem;font-weight:900;${cc==='green'?'background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#065f46':cc==='orange'?'background:linear-gradient(135deg,#ffedd5,#fed7aa);color:#92400e':'background:linear-gradient(135deg,#fee2e2,#fecaca);color:#991b1b'}">🏆 ${t}/${MAX_SCORE}</div>
-      <div style="font-size:.75rem;color:var(--gray-400);margin-top:5px;">${mc}/5 categories · Entry #${n} for your team</div>
+function renderSuccessCard(scores, mc, mr, n) {
+  const t = scores.total || 0, cc = t >= 8 ? 'green' : t >= 4 ? 'orange' : 'red';
+  const bars = Object.entries(PARAMS).map(([k, d]) => { const v = scores[k] || 0, pct = (v / PTS_EACH) * 100; return `<div class="score-bar-row"><div class="score-bar-label">${d.icon} ${d.label}</div><div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%;"></div></div><div class="score-bar-val">${v}/${PTS_EACH}</div></div>`; }).join('');
+  document.getElementById('scorePreviewDiv').innerHTML = `<div class="card" style="margin-top:14px;">
+    <div style="text-align:center;margin-bottom:12px;">
+      <div style="display:inline-block;padding:9px 24px;border-radius:36px;font-size:1.35rem;font-weight:900;${cc==='green'?'background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#065f46':cc==='orange'?'background:linear-gradient(135deg,#ffedd5,#fed7aa);color:#92400e':'background:linear-gradient(135deg,#fee2e2,#fecaca);color:#991b1b'}">🏆 ${t}/${MAX_SCORE}</div>
+      <div style="font-size:.72rem;color:var(--gray-400);margin-top:4px;">${mc}/5 categories · Entry #${n} for your team</div>
     </div>
     <div class="score-bars">${bars}</div>
-    ${scores.feedback?`<div class="score-feedback"><b>💬</b> ${esc(scores.feedback)}</div>`:''}
+    ${scores.feedback ? `<div class="score-feedback"><b>💬</b> ${esc(scores.feedback)}</div>` : ''}
   </div>`;
 }
 
-// ── HOST ──────────────────────────────────────────────────
-function hostLogin(){ document.getElementById('hostModal').style.display='flex'; document.getElementById('hostPasswordInput').value=''; document.getElementById('hostPasswordError').style.display='none'; setTimeout(()=>{try{document.getElementById('hostPasswordInput').focus();}catch(e){}},150); }
-function closeHostModal(){ document.getElementById('hostModal').style.display='none'; }
-function verifyHostPassword(){
-  const pw=(document.getElementById('hostPasswordInput').value||'').trim();
-  if(pw===HOST_PW){ closeHostModal(); showScreen('Host'); document.getElementById('headerBadge').textContent='🎓 Host'; loadDashboard(); startHostRefresh(); }
-  else{ document.getElementById('hostPasswordError').style.display='block'; document.getElementById('hostPasswordInput').value=''; try{document.getElementById('hostPasswordInput').focus();}catch(e){} }
-}
-function startHostRefresh(){ clearInterval(hostRefInt); hostRefCd=10; document.getElementById('refreshCountdown').textContent=hostRefCd+'s'; hostRefInt=setInterval(()=>{ hostRefCd--; document.getElementById('refreshCountdown').textContent=hostRefCd+'s'; if(hostRefCd<=0){loadDashboard();hostRefCd=10;} },1000); }
-function refreshDashboard(){ hostRefCd=10; loadDashboard(); }
-
-function loadDashboard(){
-  const teams=[]; let totalEntries=0;
-  for(let i=1;i<=TOTAL_TEAMS;i++){
-    const d=getTeamData(i);
-    if(d.entries&&d.entries.length){
-      totalEntries+=d.entries.length;
-      const avgScore=teamAvgScore(d), avgCats=teamAvgCats(d);
-      const avgCatScores={};
-      for(const k of Object.keys(PARAMS)) avgCatScores[k]=d.entries.reduce((a,b)=>a+(b.scores?.[k]||0),0)/d.entries.length;
-      const hitCounts={};
-      for(const k of Object.keys(PARAMS)) hitCounts[k]=d.entries.filter(e=>e.matchedCats?.[k]?.matched).length;
-      teams.push({ i, teamName:SCENARIOS[i].team, rollNos:SCENARIOS[i].rollNos, scenarioTitle:SCENARIOS[i].title, emoji:SCENARIOS[i].emoji, n:d.entries.length, avgScore, avgCats, avgCatScores, hitCounts, lastPrompt:d.entries[d.entries.length-1]?.prompt||'' });
+// ── DASHBOARD RENDER ───────────────────────────────────
+function buildTeamSummaries(rawTeams) {
+  const summaries = [];
+  for (let i = 1; i <= TOTAL_TEAMS; i++) {
+    const td = rawTeams[i];
+    if (!td || !td.entries) continue;
+    const entries = Object.values(td.entries);
+    if (!entries.length) continue;
+    const meta = td.meta || { teamName: SCENARIOS[i].team, rollNos: SCENARIOS[i].rollNos, scenarioTitle: SCENARIOS[i].title };
+    const avgScore = entries.reduce((a, b) => a + (b.scores?.total || 0), 0) / entries.length;
+    const avgCats  = entries.reduce((a, b) => a + (b.matchedCount || 0), 0) / entries.length;
+    const avgCatScores = {}, hitCounts = {};
+    for (const k of Object.keys(PARAMS)) {
+      avgCatScores[k] = entries.reduce((a, b) => a + (b.scores?.[k] || 0), 0) / entries.length;
+      hitCounts[k] = entries.filter(e => e.matchedCats?.[k]?.matched).length;
     }
+    summaries.push({ i, teamName: meta.teamName, rollNos: meta.rollNos, scenarioTitle: meta.scenarioTitle, emoji: SCENARIOS[i].emoji, n: entries.length, avgScore, avgCats, avgCatScores, hitCounts, lastPrompt: entries[entries.length - 1]?.prompt || '' });
   }
-  document.getElementById('statTeams').textContent=teams.length;
-  document.getElementById('statEntries').textContent=totalEntries;
-  document.getElementById('progressPill').style.width=(teams.length/TOTAL_TEAMS*100)+'%';
-  document.getElementById('progressText').textContent=`${teams.length} / ${TOTAL_TEAMS}`;
-  if(teams.length){ const oa=teams.reduce((a,b)=>a+b.avgScore,0)/teams.length, top=Math.max(...teams.map(t=>t.avgScore)); document.getElementById('statAvgScore').textContent=oa.toFixed(1); document.getElementById('statTopScore').textContent=top.toFixed(1); }
-  else{ document.getElementById('statAvgScore').textContent='—'; document.getElementById('statTopScore').textContent='—'; }
+  return summaries;
+}
 
-  teams.sort((a,b)=>b.avgScore-a.avgScore);
-  const content=document.getElementById('dashboardContent');
-  if(!teams.length){ content.innerHTML=`<div class="empty-state"><span style="font-size:3rem;display:block;margin-bottom:12px;">📭</span><h3 style="font-size:1rem;font-weight:700;color:var(--gray-600);margin-bottom:5px;">No Submissions Yet</h3><p style="font-size:.83rem;color:var(--gray-400);">Waiting for teams…</p></div>`; return; }
+function renderDashboard(rawTeams) {
+  const summaries = buildTeamSummaries(rawTeams);
+  updateHostStats(summaries);
+  renderLeaderboard(summaries);
+}
 
-  content.innerHTML=`<div class="lb-label">🏆 Leaderboard <span style="color:var(--gray-400);font-size:.85rem;font-weight:500;">— team scores are averaged across all entries</span></div>`
-    +teams.map((ts,idx)=>{
-      const rank=idx+1, sc=ts.avgScore, cc=sc>=8?'green':sc>=4?'orange':'red';
-      const rCls=rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':`score-${cc}-b`;
-      const rEm=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':`#${rank}`;
-      const bars=Object.entries(PARAMS).map(([k,d])=>{
-        const av=ts.avgCatScores[k]||0, pct=(av/PTS_EACH)*100;
-        return `<div class="mini-bar-row"><div class="mini-bar-label">${d.icon} ${d.label}</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pct}%;"></div></div><div class="mini-bar-val">${av.toFixed(1)}/${PTS_EACH} <span style="font-size:.62rem;color:var(--gray-400);">(${ts.hitCounts[k]}/${ts.n})</span></div></div>`;
-      }).join('');
-      return `<div class="team-entry ${rCls}">
-        <div class="te-header">
-          <div class="te-left">
-            <div class="rank-badge">${rEm}</div>
-            <div class="te-title">
-              <h3>${ts.emoji} ${ts.teamName} — ${ts.scenarioTitle}</h3>
-              <p>Roll No. ${ts.rollNos} · ${ts.n} entr${ts.n===1?'y':'ies'} · Avg ${(ts.avgCats||0).toFixed(1)}/5 categories</p>
+function renderDashboardFromLS() {
+  const raw = {};
+  for (let i = 1; i <= TOTAL_TEAMS; i++) {
+    const d = lsGet(i);
+    if (d.entries && d.entries.length) raw[i] = { entries: d.entries.reduce((acc, e, idx) => { acc[idx] = e; return acc; }, {}), meta: { teamName: d.teamName, rollNos: d.rollNos, scenarioTitle: d.scenarioTitle } };
+  }
+  renderDashboard(raw);
+}
+
+function updateHostStats(summaries) {
+  let totalEntries = 0;
+  summaries.forEach(s => totalEntries += s.n);
+  document.getElementById('statTeams').textContent = summaries.length;
+  document.getElementById('statEntries').textContent = totalEntries;
+  document.getElementById('progressPill').style.width = (summaries.length / TOTAL_TEAMS * 100) + '%';
+  document.getElementById('progressText').textContent = `${summaries.length} / ${TOTAL_TEAMS}`;
+  if (summaries.length) {
+    const oa = summaries.reduce((a, b) => a + b.avgScore, 0) / summaries.length;
+    const top = Math.max(...summaries.map(s => s.avgScore));
+    document.getElementById('statAvgScore').textContent = oa.toFixed(1);
+    document.getElementById('statTopScore').textContent = top.toFixed(1);
+  } else {
+    document.getElementById('statAvgScore').textContent = '—';
+    document.getElementById('statTopScore').textContent = '—';
+  }
+}
+
+function renderLeaderboard(summaries) {
+  const content = document.getElementById('dashboardContent');
+  if (!summaries.length) {
+    content.innerHTML = `<div class="empty-state"><span style="font-size:2.8rem;display:block;margin-bottom:10px;">📡</span><h3 style="font-size:.96rem;font-weight:700;color:var(--gray-600);margin-bottom:4px;">Listening for submissions…</h3><p style="font-size:.78rem;color:var(--gray-400);">Dashboard updates automatically when teams submit.</p></div>`;
+    return;
+  }
+  summaries.sort((a, b) => b.avgScore - a.avgScore);
+  content.innerHTML = `<div class="lb-label">🏆 Leaderboard <span style="color:var(--gray-400);font-size:.82rem;font-weight:500;">— averaged across all entries</span></div>`
+    + summaries.map((ts, idx) => {
+        const rank = idx + 1, sc = ts.avgScore, cc = sc >= 8 ? 'green' : sc >= 4 ? 'orange' : 'red';
+        const rCls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : `score-${cc}-b`;
+        const rEm  = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+        const bars = Object.entries(PARAMS).map(([k, d]) => {
+          const av = ts.avgCatScores[k] || 0, pct = (av / PTS_EACH) * 100;
+          return `<div class="mini-bar-row"><div class="mini-bar-label">${d.icon} ${d.label}</div><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${pct}%;"></div></div><div class="mini-bar-val">${av.toFixed(1)}/${PTS_EACH} <span style="font-size:.6rem;color:var(--gray-400);">(${ts.hitCounts[k]}/${ts.n})</span></div></div>`;
+        }).join('');
+        return `<div class="team-entry ${rCls}">
+          <div class="te-header">
+            <div class="te-left">
+              <div class="rank-badge">${rEm}</div>
+              <div class="te-title">
+                <h3>${ts.emoji} ${ts.teamName} — ${ts.scenarioTitle}</h3>
+                <p>Roll No. ${ts.rollNos} · ${ts.n} entr${ts.n===1?'y':'ies'} · Avg ${(ts.avgCats||0).toFixed(1)}/5 categories</p>
+              </div>
             </div>
+            <div class="score-pill ${cc}">🏆 ${sc.toFixed(1)}/${MAX_SCORE}</div>
           </div>
-          <div class="score-pill ${cc}">🏆 ${sc.toFixed(1)}/${MAX_SCORE}</div>
-        </div>
-        <div class="collapsible-trigger" onclick="togCol('d${idx}',this)">
-          <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
-          Show breakdown (${ts.n} entries averaged)
-        </div>
-        <div class="collapsible-content" id="d${idx}">
-          <div class="det-label">📊 Avg score per dimension (hits / total entries)</div>
-          <div class="mini-bars">${bars}</div>
-          ${ts.lastPrompt?`<div class="det-label" style="margin-top:11px;">💬 Latest entry prompt</div><div style="font-size:.81rem;color:var(--gray-700);background:var(--gray-50);padding:9px 12px;border-radius:8px;line-height:1.6;">${esc(ts.lastPrompt)}</div>`:''}
-        </div>
-      </div>`;
-    }).join('');
+          <div class="collapsible-trigger" onclick="togCol('d${idx}',this)">
+            <svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+            Show breakdown (${ts.n} entries averaged)
+          </div>
+          <div class="collapsible-content" id="d${idx}">
+            <div class="det-label" style="margin-top:9px;">📊 Avg per dimension (hits / entries)</div>
+            <div class="mini-bars">${bars}</div>
+            ${ts.lastPrompt ? `<div class="det-label" style="margin-top:10px;">💬 Latest prompt</div><div style="font-size:.79rem;color:var(--gray-700);background:var(--gray-50);padding:8px 11px;border-radius:8px;line-height:1.6;">${esc(ts.lastPrompt)}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
 }
 
-function togCol(id,tr){
-  const el=document.getElementById(id),op=el.classList.contains('open');
+function togCol(id, tr) {
+  const el = document.getElementById(id), op = el.classList.contains('open');
   el.classList.toggle('open');
-  tr.innerHTML=op?`<svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg> Show breakdown`
-  :`<svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/></svg> Hide breakdown`;
+  tr.innerHTML = op
+    ? `<svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg> Show breakdown`
+    : `<svg width="13" height="13" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/></svg> Hide breakdown`;
 }
 
-function clearAllData(){
-  if(!confirm('Delete ALL submissions? Cannot be undone.'))return;
-  for(let i=1;i<=TOTAL_TEAMS;i++) localStorage.removeItem(SK(i));
-  loadDashboard(); toast('🗑️ Cleared!','info');
+// ── HOST AUTH ──────────────────────────────────────────
+function hostLogin() { document.getElementById('hostModal').style.display = 'flex'; document.getElementById('hostPasswordInput').value = ''; document.getElementById('hostPasswordError').style.display = 'none'; setTimeout(() => { try { document.getElementById('hostPasswordInput').focus(); } catch(e) {} }, 150); }
+function closeHostModal() { document.getElementById('hostModal').style.display = 'none'; }
+function verifyHostPassword() {
+  const pw = (document.getElementById('hostPasswordInput').value || '').trim();
+  if (pw === HOST_PW) {
+    closeHostModal();
+    showScreen('Host');
+    document.getElementById('headerBadge').textContent = '🎓 Host';
+    attachHostListener();
+  } else {
+    document.getElementById('hostPasswordError').style.display = 'block';
+    document.getElementById('hostPasswordInput').value = '';
+    try { document.getElementById('hostPasswordInput').focus(); } catch(e) {}
+  }
 }
 
-document.addEventListener('keydown',e=>{
-  const m=document.getElementById('hostModal');
-  if(e.key==='Escape'&&m.style.display==='flex') closeHostModal();
-  if(e.key==='Enter'&&m.style.display==='flex') verifyHostPassword();
+document.addEventListener('keydown', e => {
+  const m = document.getElementById('hostModal');
+  if (e.key === 'Escape' && m.style.display === 'flex') closeHostModal();
+  if (e.key === 'Enter'  && m.style.display === 'flex') verifyHostPassword();
 });
 
+// ── BOOT ───────────────────────────────────────────────
+initFirebase();
 showScreen('Join');
 </script>
 </body>
