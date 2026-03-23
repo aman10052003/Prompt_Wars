@@ -3,12 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Rescue Mission — Flipkart Prompt Quality Game</title>
+<title>Flipkart Crisis — Prompt Engineering Challenge</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -274,10 +270,10 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 
 <header class="app-header">
   <div class="header-logo">
-    <div class="logo-icon">🚨</div>
+    <div class="logo-icon">🛒</div>
     <div>
-      <h1>AI Rescue Mission</h1>
-      <p>Flipkart Prompt Quality Game</p>
+      <h1>Flipkart Crisis Challenge</h1>
+      <p>Prompt Engineering Competition</p>
     </div>
   </div>
   <div class="header-right">
@@ -290,9 +286,8 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 <div id="screenJoin" class="screen active">
   <div class="container" style="max-width:500px;">
     <div class="join-hero">
-      <span class="hero-emoji">🛡️</span>
-      <h2>Prompt Quality Challenge</h2>
-      <p>Write the best crisis-response prompt. NLP engine scores it across 5 dimensions in real-time.</p>
+      <h2>Flipkart Crisis Challenge</h2>
+      <p>You are a Flipkart executive facing a real company crisis. <strong>Write a prompt you would give to an AI</strong> to solve it — scored live across 5 quality dimensions.</p>
     </div>
 
     <div class="card">
@@ -342,7 +337,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
         <div class="crisis-badge">🚨 LIVE CRISIS</div>
         <h2 id="gameTeamName"></h2>
         <div style="font-size:.9rem;opacity:.9;font-weight:600;margin-bottom:4px;" id="gameScenarioTitle"></div>
-        <div style="font-size:.8rem;opacity:.76;line-height:1.6;max-width:520px;" id="gameScenarioDesc"></div>
+        <div id="gameScenarioDesc" style="font-size:.82rem;opacity:.82;line-height:1.65;max-width:540px;white-space:pre-line;"></div>
       </div>
       <div class="timer-container">
         <div class="timer-circle">
@@ -369,9 +364,9 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
       </div>
 
       <div class="form-group" style="margin-bottom:9px;">
-        <label>✍️ Your Crisis-Response Prompt</label>
+        <label>✍️ Write Your AI Prompt to Solve This Crisis</label>
         <textarea id="promptInput" class="prompt-textarea" rows="6"
-          placeholder="Write your best prompt — include your role, objective, structure, crisis approach, and business impact…"
+          placeholder="Write your AI prompt here to solve this crisis. Example: 'Act as an expert HR consultant. I am Flipkart's HR Director facing a mass resignation crisis. Provide a step-by-step retention plan covering: immediate response, communication strategy, policy changes, and long-term fixes. Format as a prioritised action plan with timelines.'"
           maxlength="1200"></textarea>
         <div style="font-size:.7rem;color:var(--gray-400);margin-top:3px;text-align:right;"><span id="charCount">0</span>/1200</div>
       </div>
@@ -416,8 +411,8 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
     <div class="host-header">
       <div class="host-header-top">
         <div>
-          <h2>🎓 Host Dashboard</h2>
-          <p style="opacity:.72;font-size:.78rem;margin-top:2px;">Prompt Quality Challenge — Real-time Results</p>
+          <h2>📊 Host Dashboard</h2>
+          <p style="opacity:.72;font-size:.78rem;margin-top:2px;">Flipkart Crisis Challenge — Real-time Results</p>
         </div>
         <div class="host-actions">
           <div class="live-badge"><span class="live-dot"></span> Live Updates</div>
@@ -475,7 +470,6 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 // ║  console.firebase.google.com →                      ║
 // ║  Project Settings → Your apps → Firebase SDK config ║
 // ╚══════════════════════════════════════════════════════╝
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyCRFhjJ34qt8ERK6iyp2-jqJcopIvzqpj8",
   authDomain:        "prompt-engineering-ed004.firebaseapp.com",
@@ -483,16 +477,24 @@ const FIREBASE_CONFIG = {
   projectId:         "prompt-engineering-ed004",
   storageBucket:     "prompt-engineering-ed004.firebasestorage.app",
   messagingSenderId: "185390571571",
-  appId:             "1:185390571571:web:9600d8a1c75ef45d3a8346"
+  appId:             "1:185390571571:web:9600d8a1c75ef45d3a8346",
+  measurementId:     "G-LBV1B0YTZT"
 };
+
 // ── SCENARIOS ──────────────────────────────────────────
 const SCENARIOS = {
-  1:{ team:"Team 1", rollNos:"01–10", emoji:"💻", title:"Website Crash",            desc:"You are part of the IT operations team at Flipkart. During a major sale event the website crashes due to high traffic. Thousands of users cannot access the platform, causing revenue loss and customer frustration." },
-  2:{ team:"Team 2", rollNos:"11–20", emoji:"💳", title:"Payment Failure Crisis",   desc:"You are in the payment systems team at Flipkart. Customers report payments are deducted but orders are not confirmed. Complaints are rising rapidly and trust is at risk." },
-  3:{ team:"Team 3", rollNos:"21–30", emoji:"📦", title:"Delivery Delays",           desc:"You are in the logistics management team at Flipkart. Orders across multiple cities face unexpected delays. Customers are complaining on social media, damaging brand reputation." },
-  4:{ team:"Team 4", rollNos:"31–40", emoji:"🔄", title:"Wrong Product Delivered",   desc:"You are in the order fulfillment team at Flipkart. Customers are receiving incorrect products. Return requests are increasing and operational costs are rising." },
-  5:{ team:"Team 5", rollNos:"41–50", emoji:"📱", title:"App Failure",               desc:"You are in the mobile app team at Flipkart. The app suddenly stops working during peak hours. Users are unable to browse or place orders." },
-  6:{ team:"Team 6", rollNos:"51–67", emoji:"🔒", title:"Data Security Risk",        desc:"You are in the cybersecurity team at Flipkart. Customer data may have been exposed due to a system vulnerability, risking legal consequences and destroying user trust." }
+  1:{ team:"Team 1", rollNos:"01–10", emoji:"👥", title:"HR — Mass Resignation Crisis",
+      desc:"📌 SITUATION: You are Flipkart's HR Director. Within 48 hours, 120 mid-level engineers and managers have resigned after a leaked internal memo suggested 15% layoffs. Glassdoor ratings have crashed, campus placement offers are being rejected, and the CHRO needs an action plan before the story hits the press.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this HR crisis. A good prompt will clearly state your role, describe the problem with context, ask for a structured retention strategy (immediate + long-term), specify communication steps for employees, and request the output in a format usable in a real boardroom." },
+  2:{ team:"Team 2", rollNos:"11–20", emoji:"💰", title:"Finance — Cash Flow Emergency",
+      desc:"📌 SITUATION: You are Flipkart's CFO. Walmart has frozen ₹3,200 crore in funding after auditors found a ₹480 crore discrepancy in GMV reporting. Vendor payments are due in 72 hours, payroll in 10 days, and two lenders have triggered early-repayment clauses. The audit committee meets in 24 hours expecting a full plan.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this financial crisis. A good prompt will define your CFO role, explain the cash flow situation with numbers, ask for a time-bound recovery plan covering liquidity options, lender negotiations, audit response strategy, and stakeholder communication — with financial impact estimates." },
+  3:{ team:"Team 3", rollNos:"21–30", emoji:"💻", title:"Systems — Big Billion Days Meltdown",
+      desc:"📌 SITUATION: You are Flipkart's VP of Engineering. On Day 1 of Big Billion Days, a faulty deployment has crashed search, checkout, and the recommendation engine simultaneously. 8 million users are getting errors. Rolling back is not safe — the previous version has a known security flaw. Every minute of downtime costs ₹2 crore.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this systems crisis. A good prompt will set up your engineering leadership role, describe the technical failure clearly, ask for a structured incident response plan — covering hotfix approach, stakeholder communication, customer impact management, and a post-mortem framework — with priorities and timelines." },
+  4:{ team:"Team 4", rollNos:"31–40", emoji:"⚙️", title:"Operations — Warehouse Fire Crisis",
+      desc:"📌 SITUATION: You are Flipkart's COO. A fire at the Bhiwandi mega-warehouse — which handles 35% of all Flipkart orders — has destroyed ₹600 crore worth of inventory. 2.8 million orders are stuck with no fulfilment path. Sellers are demanding compensation, customers are filing complaints, and the board expects a recovery roadmap in 6 hours.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this operations crisis. A good prompt will establish your COO role, describe the scale of disruption with numbers, ask for a phased recovery plan covering order rerouting, seller compensation policy, customer communication templates, insurance claim process, and a business continuity plan." },
+  5:{ team:"Team 5", rollNos:"41–50", emoji:"📣", title:"Marketing — Campaign Backfire",
+      desc:"📌 SITUATION: You are Flipkart's CMO. A Diwali ad campaign launched this morning has been called culturally offensive by two major community groups. #BoycottFlipkart is trending at #2 nationally. Influencers are cancelling paid partnerships, ₹18 crore in live ad spend is at risk, and brand sentiment has dropped 40 points in just 4 hours.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this marketing crisis. A good prompt will state your CMO role, describe the backlash with specifics, ask for a full crisis communication plan — including a public apology draft, social media response strategy, influencer management approach, ad campaign pause/pivot plan, and a 30-day brand recovery roadmap." },
+  6:{ team:"Team 6", rollNos:"51–67", emoji:"🔗", title:"Strategy — Amazon Acquisition Threat",
+      desc:"📌 SITUATION: You are Flipkart's Chief Strategy Officer. A leaked board document reveals Amazon has made a ₹42,000 crore hostile acquisition bid. Three board members favour accepting. Walmart threatens to exit if the deal goes through. Employees are panicking about job security and key sellers are exploring alternatives. You have 48 hours to present a counter-strategy.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this strategy crisis. A good prompt will establish your strategic role, explain the acquisition threat and internal conflict, ask for a board-ready counter-strategy — covering Flipkart's standalone valuation case, growth roadmap, Walmart alignment plan, defensive market moves, and a negotiation framework against Amazon." }
 };
 
 // ── NLP — 5 PARAMETERS ────────────────────────────────
@@ -524,26 +526,54 @@ function initFirebase() {
   if (isPlaceholder) {
     document.getElementById('setupBanner').style.display = 'flex';
     setFbStatus('error', '⚠️ Not configured');
-    // Fall back to localStorage so app still works locally
     fbReady = false;
     return;
   }
+
+  // If databaseURL not set, try both common region formats
+  if (!FIREBASE_CONFIG.databaseURL) {
+    FIREBASE_CONFIG.databaseURL =
+      `https://${FIREBASE_CONFIG.projectId}-default-rtdb.firebaseio.com`;
+  }
+
   try {
-    firebase.initializeApp(FIREBASE_CONFIG);
+    // Avoid duplicate app init on hot reload
+    let app;
+    try { app = firebase.app(); }
+    catch(e) { app = firebase.initializeApp(FIREBASE_CONFIG); }
+
     db = firebase.database();
-    // Test connection
+
+    // Listen for connection state
     db.ref('.info/connected').on('value', snap => {
       if (snap.val() === true) {
         fbReady = true;
         setFbStatus('connected', '🔴 Live');
+        document.getElementById('setupBanner').style.display = 'none';
       } else {
         fbReady = false;
         setFbStatus('connecting', 'Connecting…');
       }
     });
+
+    // Timeout — if not connected in 8s, show helpful error
+    setTimeout(() => {
+      if (!fbReady) {
+        setFbStatus('error', '❌ DB unreachable');
+        console.warn(
+          'Firebase Realtime Database unreachable.\n' +
+          'Check:\n' +
+          '1. Realtime Database is CREATED in Firebase Console (Build → Realtime Database)\n' +
+          '2. Rules are set to allow read/write\n' +
+          '3. databaseURL in FIREBASE_CONFIG matches the URL shown in Firebase Console\n' +
+          'Current databaseURL: ' + FIREBASE_CONFIG.databaseURL
+        );
+      }
+    }, 8000);
+
   } catch(e) {
-    console.error('Firebase init error:', e);
-    setFbStatus('error', '❌ Error');
+    console.error('Firebase init error:', e.message);
+    setFbStatus('error', '❌ ' + e.message.substring(0, 40));
     fbReady = false;
   }
 }
@@ -649,11 +679,14 @@ function onTeamSelect() {
   const pv = document.getElementById('scenarioPreview');
   if (!v || !SCENARIOS[v]) { pv.style.display = 'none'; return; }
   const s = SCENARIOS[v];
+  const previewParts = s.desc.split('\n\n');
+  const situationHtml = previewParts[0] ? `<p style="font-size:.83rem;color:var(--gray-600);line-height:1.65;margin-bottom:10px;">${previewParts[0].replace(/\n/g,'<br>')}</p>` : '';
+  const taskHtml = previewParts[1] ? `<div style="background:linear-gradient(135deg,#fff3e0,#fff8f0);border-left:4px solid var(--orange);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--gray-700);line-height:1.6;font-weight:600;">${previewParts[1].replace(/\n/g,'<br>')}</div>` : '';
   pv.innerHTML = `<div class="scenario-preview">
     <span class="scenario-badge">${s.emoji} ${s.team}</span>
     <span class="roll-badge">Roll No. ${s.rollNos}</span>
-    <h3 style="margin-top:8px;">${s.title}</h3>
-    <p>${s.desc}</p>
+    <h3 style="margin-top:8px;margin-bottom:10px;">${s.title}</h3>
+    ${situationHtml}${taskHtml}
   </div>`;
   pv.style.display = 'block';
 }
@@ -671,9 +704,15 @@ async function joinAsTeam() {
 // ── GAME ───────────────────────────────────────────────
 function setupGame(t, existingCount) {
   const s = SCENARIOS[t];
-  document.getElementById('gameTeamName').textContent    = `${s.emoji} ${s.team} — Roll No. ${s.rollNos}`;
+  document.getElementById('gameTeamName').textContent     = `${s.emoji} ${s.team} — Roll No. ${s.rollNos}`;
   document.getElementById('gameScenarioTitle').textContent = s.title;
-  document.getElementById('gameScenarioDesc').textContent  = s.desc;
+  // Render desc: split at the YOUR CHALLENGE line for visual separation
+  const parts = s.desc.split('\n\n');
+  const descEl = document.getElementById('gameScenarioDesc');
+  descEl.innerHTML = parts.map((p, i) => {
+    if (i === 0) return `<div style="margin-bottom:10px;">${p.replace(/\n/g,'<br>')}</div>`;
+    return `<div style="background:rgba(255,255,255,.15);border-radius:8px;padding:10px 14px;margin-top:4px;font-weight:600;">${p.replace(/\n/g,'<br>')}</div>`;
+  }).join('');
   document.getElementById('headerBadge').textContent       = `${s.emoji} ${s.team}`;
   document.getElementById('analysisSection').style.display = 'none';
   document.getElementById('loadingAnalysis').style.display = 'none';
@@ -957,8 +996,27 @@ document.addEventListener('keydown', e => {
 });
 
 // ── BOOT ───────────────────────────────────────────────
-initFirebase();
-showScreen('Join');
+showScreen('Join'); // initFirebase() is called by SDK loader below
+</script>
+
+<!-- Firebase SDKs loaded last to guarantee availability -->
+<script>
+// Dynamic loader — ensures firebase is defined before init
+(function loadFirebase() {
+  function loadScript(src, cb) {
+    const s = document.createElement('script');
+    s.src = src; s.onload = cb;
+    s.onerror = () => { console.error('Failed to load: ' + src); cb(); };
+    document.head.appendChild(s);
+  }
+  const APP_SDK = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js';
+  const DB_SDK  = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js';
+  loadScript(APP_SDK, () => {
+    loadScript(DB_SDK, () => {
+      initFirebase();
+    });
+  });
+})();
 </script>
 </body>
 </html>
