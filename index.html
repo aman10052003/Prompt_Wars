@@ -287,7 +287,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
   <div class="container" style="max-width:500px;">
     <div class="join-hero">
       <h2>Flipkart Crisis Challenge</h2>
-      <p>You are a Flipkart executive facing a real company crisis. <strong>Write a prompt you would give to an AI</strong> to solve it </p>
+      <p>You are a Flipkart executive facing a real company crisis. <strong>Write a prompt you would give to an AI</strong> to solve it — scored live across 5 quality dimensions.</p>
     </div>
 
     <div class="card">
@@ -430,7 +430,7 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
         <div class="progress-pill">
           📈 Teams:
           <div class="pill-fill"><div class="pill-inner" id="progressPill" style="width:0%;"></div></div>
-          <span id="progressText">0 / 6</span>
+          <span id="progressText">0 / 5</span>
         </div>
       </div>
     </div>
@@ -465,9 +465,6 @@ body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#0d1b6e 
 <script>
 // ╔══════════════════════════════════════════════════════╗
 // ║           FIREBASE CONFIGURATION                    ║
-// ║  Replace with YOUR project's config from:           ║
-// ║  console.firebase.google.com →                      ║
-// ║  Project Settings → Your apps → Firebase SDK config ║
 // ╚══════════════════════════════════════════════════════╝
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyCRFhjJ34qt8ERK6iyp2-jqJcopIvzqpj8",
@@ -498,55 +495,21 @@ const SCENARIOS = {
       desc:"📌 SITUATION: You are Flipkart's CMO. A high-budget Diwali ad campaign launched this morning has been called culturally insensitive and offensive by two major community groups. The hashtag #BoycottFlipkart is trending nationally at #2 on X (Twitter). Seven top influencers with a combined reach of 40 million followers have publicly cancelled their paid brand partnerships. ₹18 crore in live digital ad spend is running across YouTube, Instagram, and OTT platforms right now. Brand sentiment has crashed 40 points in 4 hours. Competitors are amplifying the controversy. You have until evening to contain the damage.\n\n🎯 YOUR CHALLENGE: Write a prompt to an AI to solve this Marketing crisis." }
 };
 
-// ── NLP — PER-TEAM SCENARIO-SPECIFIC PARAMS ──────────────
-// Each team has 5 dimensions with keywords tailored to their crisis
-
-const TEAM_PARAMS = {
-  1: {
-    ai_role:{           icon:"🤖", label:"AI Role Assigned",       kw:["act as","you are a","assume the role","play the role","as an expert","as a consultant","as a financial","as a cfo","as a strategist","as an advisor","i want you to be","behave as","respond as","you will act"] },
-    output_format:{     icon:"📐", label:"Output Format Specified", kw:["table","numbered list","bullet points","step by step","as a report","structured format","in sections","with headers","prioritized","ranked","timeline","action items","present as","format your response","in phases","day 1","week 1","first then"] },
-    chain_of_thought:{  icon:"⛓️", label:"Chain of Thought",        kw:["think step by step","reason before","analyze first","explain your reasoning","break down","consider each","evaluate before","assess","diagnose","identify root cause","weigh the options","justify each","think through","what are the tradeoffs"] },
-    constraints:{       icon:"🚧", label:"Constraints Added",       kw:["within 24 hours","within 72 hours","without","budget of","limit to","no more than","given that","constraint","only use","do not include","avoid","must not","restricted to","in less than","keep it under","prioritize only","focus only on"] },
-    own_context:{       icon:"🎯", label:"Added Own Thinking",      kw:["for example","such as","specifically","i suggest","my recommendation","also consider","additionally","furthermore","moreover","another approach","one option is","alternatively","i believe","in my view","from my analysis","key insight","important to note"] }
-  },
-  2: {
-    ai_role:{           icon:"🤖", label:"AI Role Assigned",       kw:["act as","you are a","assume the role","play the role","as a senior engineer","as a systems architect","as a tech lead","as a devops expert","as an sre","as a cto","as an incident commander","i want you to be","behave as","respond as","you will act"] },
-    output_format:{     icon:"📐", label:"Output Format Specified", kw:["runbook","step by step","numbered","table","timeline","incident report","rca format","phases","priority order","structured format","action items","checklist","in order of","escalation path","first then finally","sequential","p0","p1"] },
-    chain_of_thought:{  icon:"⛓️", label:"Chain of Thought",        kw:["think step by step","diagnose first","analyze before","identify the root cause","reason through","trace the failure","evaluate each","consider dependencies","what caused","explain your logic","justify","assess impact before","break down the problem","think through"] },
-    constraints:{       icon:"🚧", label:"Constraints Added",       kw:["within 30 minutes","without rollback","cannot rollback","given the security risk","no maintenance window","under load","live traffic","limited to","without redeploying","avoid data loss","zero downtime","must not expose","keeping security in mind","assume no downtime window"] },
-    own_context:{       icon:"🎯", label:"Added Own Thinking",      kw:["for example","such as","specifically","one approach","i suggest","also consider","additionally","another option","alternatively","key insight","from my analysis","my recommendation","important to note","in particular","furthermore","i believe","worth noting"] }
-  },
-  3: {
-    ai_role:{           icon:"🤖", label:"AI Role Assigned",       kw:["act as","you are a","assume the role","play the role","as a supply chain expert","as a logistics consultant","as a coo","as an operations manager","as a crisis manager","as a fulfilment expert","i want you to be","behave as","respond as","you will act"] },
-    output_format:{     icon:"📐", label:"Output Format Specified", kw:["table","numbered list","bullet points","phased plan","step by step","timeline","priority order","action items","structured format","week by week","day by day","in phases","checklist","first then finally","organized by","in order of urgency","gantt"] },
-    chain_of_thought:{  icon:"⛓️", label:"Chain of Thought",        kw:["think step by step","assess damage first","prioritize before","analyze impact","reason through","triage first","identify critical","evaluate options","consider tradeoffs","what should come first","justify each step","explain your logic","think through","weigh alternatives"] },
-    constraints:{       icon:"🚧", label:"Constraints Added",       kw:["within 6 hours","without additional cost","given limited resources","assume no new warehouse","budget constraint","only existing partners","cannot cancel orders","must protect sellers","keep customer trust","legal constraint","given festive season","without delay","time bound"] },
-    own_context:{       icon:"🎯", label:"Added Own Thinking",      kw:["for example","such as","specifically","i suggest","one option","also consider","additionally","another approach","my recommendation","key insight","in particular","furthermore","i believe","from my view","worth noting","an important aspect","alternatively"] }
-  },
-  4: {
-    ai_role:{           icon:"🤖", label:"AI Role Assigned",       kw:["act as","you are a","assume the role","play the role","as an hr expert","as a people consultant","as a chro","as an organizational psychologist","as a talent strategist","as an employee relations expert","i want you to be","behave as","respond as","you will act"] },
-    output_format:{     icon:"📐", label:"Output Format Specified", kw:["table","numbered list","bullet points","communication template","email draft","town hall script","step by step","phased plan","timeline","action items","structured format","week 1 week 2","immediate short-term long-term","checklist","policy document","first then finally"] },
-    chain_of_thought:{  icon:"⛓️", label:"Chain of Thought",        kw:["think step by step","diagnose before","identify root cause","understand why","analyze the sentiment","reason through","assess the situation","evaluate options","consider employee perspective","justify each action","explain the rationale","think through","weigh the tradeoffs","what would motivate"] },
-    constraints:{       icon:"🚧", label:"Constraints Added",       kw:["without layoffs","no salary cuts","within 48 hours","before media breaks","given limited budget","must keep campus relations","legal constraint","cannot confirm or deny","without alarming employees","while maintaining confidentiality","must be empathetic","sensitive to","assume no new policies"] },
-    own_context:{       icon:"🎯", label:"Added Own Thinking",      kw:["for example","such as","specifically","i suggest","one approach","also consider","additionally","my recommendation","key insight","from my perspective","in particular","furthermore","i believe","worth noting","an important factor","consider also","alternatively"] }
-  },
-  5: {
-    ai_role:{           icon:"🤖", label:"AI Role Assigned",       kw:["act as","you are a","assume the role","play the role","as a brand strategist","as a pr expert","as a cmo","as a crisis communications expert","as a social media strategist","as a marketing consultant","i want you to be","behave as","respond as","you will act"] },
-    output_format:{     icon:"📐", label:"Output Format Specified", kw:["table","numbered list","bullet points","press release draft","apology statement","social media post","script","step by step","phased plan","30 day plan","timeline","action items","structured format","first then finally","week 1","response template","content calendar"] },
-    chain_of_thought:{  icon:"⛓️", label:"Chain of Thought",        kw:["think step by step","assess severity first","prioritize before acting","analyze audience sentiment","reason through","consider different stakeholders","evaluate which channels","justify each move","explain the rationale","think through","weigh short vs long term","what would restore trust","diagnose the root perception"] },
-    constraints:{       icon:"🚧", label:"Constraints Added",       kw:["within 4 hours","before it escalates","without making it worse","given live ad spend","cannot pull all ads","must not alienate","while keeping brand voice","sensitive to community","budget of","must be authentic","avoid legal liability","given influencer contracts","assume no ceo statement yet"] },
-    own_context:{       icon:"🎯", label:"Added Own Thinking",      kw:["for example","such as","specifically","i suggest","one approach","also consider","additionally","my recommendation","key insight","in particular","furthermore","i believe","worth noting","consider also","alternatively","another angle","an important point","from a brand perspective"] }
-  }
+// ── NLP — 5 SHARED PARAMETERS (same for all teams) ────
+const PARAMS = {
+  role:{           icon:"🎭", label:"Role Definition",    kw:["act as","you are","assume the role","as a","expert","specialist","i am","my role","as an","i'm a","playing the role"] },
+  objective:{      icon:"🎯", label:"Clear Objective",    kw:["objective","goal","task is","develop a plan","resolve","mitigate","analyze","fix","design","create","aim","purpose","solve","target","achieve","ensure","need to","want to"] },
+  structure:{      icon:"📋", label:"Structure & Format", kw:["step-by-step","steps","break it down","divide into","sections","phases","immediate","short-term","long-term","bullet","table","headings","format","numbered","list","framework","outline","first","then","finally","stage"] },
+  crisis_handling:{ icon:"🚨", label:"Crisis Handling",   kw:["immediate actions","mitigation","escalation","fallback","contingency","recovery","failover","rollback","incident","emergency","crisis","triage","downtime","restore","hotfix","workaround","patch","alert","respond","contain","stabilize"] },
+  business_impact:{ icon:"💼", label:"Business Impact",   kw:["revenue","customer experience","user retention","brand reputation","trust","loss","cost","impact","conversion","churn","profit","financial","sales","stakeholder","customer satisfaction","refund","compensation","sla","kpi"] }
 };
-// Active PARAMS = team's params (set when team joins)
-let PARAMS = TEAM_PARAMS[1]; // default, overridden in setupGame
 
 const PTS_EACH    = 2;
-const MAX_SCORE   = 5 * PTS_EACH; // always 10
+const MAX_SCORE   = Object.keys(PARAMS).length * PTS_EACH; // 10
 const HOST_PW     = "host123";
 const TOTAL_TEAMS = 5;
 const MAX_ENTRIES = 45;
-const DB_PATH     = "rescue_game"; // root path in Firebase
+const DB_PATH     = "rescue_game";
 
 // ── STATE ──────────────────────────────────────────────
 let db = null;
@@ -565,21 +528,18 @@ function initFirebase() {
     return;
   }
 
-  // If databaseURL not set, try both common region formats
   if (!FIREBASE_CONFIG.databaseURL) {
     FIREBASE_CONFIG.databaseURL =
       `https://${FIREBASE_CONFIG.projectId}-default-rtdb.firebaseio.com`;
   }
 
   try {
-    // Avoid duplicate app init on hot reload
     let app;
     try { app = firebase.app(); }
     catch(e) { app = firebase.initializeApp(FIREBASE_CONFIG); }
 
     db = firebase.database();
 
-    // Listen for connection state
     db.ref('.info/connected').on('value', snap => {
       if (snap.val() === true) {
         fbReady = true;
@@ -591,7 +551,6 @@ function initFirebase() {
       }
     });
 
-    // Timeout — if not connected in 8s, show helpful error
     setTimeout(() => {
       if (!fbReady) {
         setFbStatus('error', '❌ DB unreachable');
@@ -632,20 +591,17 @@ async function getTeamEntryCount(teamNum) {
 
 async function pushEntry(teamNum, entry) {
   if (!fbReady) {
-    // localStorage fallback
     const d = lsGet(teamNum);
     if (!d.entries) d.entries = [];
     d.entries.push(entry);
     d.teamNum = teamNum;
     d.teamName = SCENARIOS[teamNum].team;
-    
     d.scenarioTitle = SCENARIOS[teamNum].title;
     lsSet(teamNum, d);
     return true;
   }
   const meta = {
     teamNum, teamName: SCENARIOS[teamNum].team,
-    
     scenarioTitle: SCENARIOS[teamNum].title
   };
   await db.ref(`${DB_PATH}/teams/${teamNum}/meta`).set(meta);
@@ -653,18 +609,15 @@ async function pushEntry(teamNum, entry) {
   return true;
 }
 
-// localStorage helpers (fallback)
 function lsGet(t) { try { return JSON.parse(localStorage.getItem(`rqg_team_${t}`)) || {}; } catch(e) { return {}; } }
 function lsSet(t, d) { localStorage.setItem(`rqg_team_${t}`, JSON.stringify(d)); }
 
 // ── HOST: Real-time listener ───────────────────────────
 function attachHostListener() {
   if (!fbReady) {
-    // localStorage fallback: just render once
     renderDashboardFromLS();
     return;
   }
-  // Detach any existing listener
   if (hostListener) {
     db.ref(`${DB_PATH}/teams`).off('value', hostListener);
   }
@@ -729,11 +682,9 @@ function onTeamSelect() {
 async function joinAsTeam() {
   const v = parseInt(document.getElementById('teamSelect').value);
   if (!v || !SCENARIOS[v]) { toast('Please select your team first!', 'error'); return; }
-  // Join immediately — check entry count in background, don't block on Firebase
   currentTeam = v;
   setupGame(v, 0);
   showScreen('Game');
-  // Update entry count display after joining (non-blocking)
   try {
     const count = await getTeamEntryCount(v);
     if (count >= MAX_ENTRIES) {
@@ -750,10 +701,8 @@ async function joinAsTeam() {
 // ── GAME ───────────────────────────────────────────────
 function setupGame(t, existingCount) {
   const s = SCENARIOS[t];
-  PARAMS = TEAM_PARAMS[t]; // load scenario-specific keywords
   document.getElementById('gameTeamName').textContent     = `${s.emoji} ${s.team} — ${s.spec} Specialization`;
   document.getElementById('gameScenarioTitle').textContent = s.title;
-  // Render desc: split at the YOUR CHALLENGE line for visual separation
   const parts = s.desc.split('\n\n');
   const descEl = document.getElementById('gameScenarioDesc');
   descEl.innerHTML = parts.map((p, i) => {
@@ -777,7 +726,6 @@ function setupGame(t, existingCount) {
   pi.oninput = () => { document.getElementById('charCount').textContent = pi.value.length; };
   document.getElementById('charCount').textContent = '0';
   document.getElementById('btnAnalyze').disabled = false;
-  const bs = document.getElementById('btnSubmit'); if (bs) bs.disabled = false;
   analysisResult = null;
   startTimer();
 }
@@ -800,27 +748,14 @@ function onTimeUp() {
   document.getElementById('timesUpBanner').style.display = 'block';
   document.getElementById('promptInput').disabled = true;
   document.getElementById('btnAnalyze').disabled = true;
-  const bs = document.getElementById('btnSubmit'); if (bs) bs.disabled = true;
   toast("⏰ Time's up!", 'error', 5000);
 }
 
 // ── NLP ────────────────────────────────────────────────
-// Strip scenario words so copy-pasting the situation earns 0
-function getCleanPrompt(rawPrompt) {
-  const scenario = SCENARIOS[currentTeam];
-  if (!scenario) return rawPrompt.toLowerCase();
-  const scenarioWords = new Set(
-    scenario.desc.toLowerCase().replace(/[^a-z0-9 ]/g,' ').split(' ').filter(w => w.length > 4)
-  );
-  let cleaned = rawPrompt.toLowerCase();
-  scenarioWords.forEach(w => { cleaned = cleaned.split(w).join(' '); });
-  return cleaned;
-}
 function matchKw(prompt) {
-  const cleaned = getCleanPrompt(prompt);
-  const res = {};
+  const pl = prompt.toLowerCase(), res = {};
   for (const [k, d] of Object.entries(PARAMS)) {
-    const hits = d.kw.filter(w => cleaned.includes(w.toLowerCase()));
+    const hits = d.kw.filter(w => pl.includes(w));
     res[k] = { matched: hits.length > 0, hits };
   }
   return res;
@@ -833,11 +768,9 @@ function calcScores(mr) {
 function makeFeedback(mr, scores) {
   const t = scores.total;
   const miss = Object.entries(mr).filter(([, v]) => !v.matched).map(([k]) => PARAMS[k].label);
-  if (t >= 10) return 'Perfect! You defined the AI role, specified output format, guided reasoning, set constraints, and added your own thinking.';
-  if (t >= 8)  return 'Strong prompt! Almost all quality dimensions covered. Missing: ' + miss.join(', ') + '.';
-  if (t >= 6)  return 'Good effort. Try adding ' + miss.join(' and ') + ' to score higher.';
-  if (t >= 4)  return 'Decent start. Your prompt needs: ' + miss.join(', ') + '.';
-  return 'Low score — just describing the crisis is not enough. Tell the AI what role to play, how to format the answer, and add your own constraints or thinking.';
+  let fb = t >= 10 ? 'Perfect! All 5 dimensions covered.' : t >= 8 ? 'Excellent! Almost all dimensions.' : t >= 6 ? 'Good effort. A couple more dimensions would help.' : t >= 4 ? 'Decent start. Add more structure and business context.' : 'Needs more depth — role, objective, and crisis approach.';
+  if (miss.length) fb += ` Missing: ${miss.join(', ')}.`;
+  return fb;
 }
 
 // ── ANALYZE ────────────────────────────────────────────
@@ -896,7 +829,6 @@ async function submitPrompt() {
   if (timerExpired) { toast("⏰ Time's up!", 'error'); return; }
   if (!analysisResult) { toast('Analyze your prompt first!', 'error'); return; }
 
-  // Check cap
   const count = await getTeamEntryCount(currentTeam);
   if (count >= MAX_ENTRIES) { toast('Maximum entries reached for your team!', 'error', 4000); return; }
 
@@ -919,7 +851,6 @@ async function submitPrompt() {
     toast('🎉 Submitted! Live on host dashboard.', 'success', 4000);
   } catch(e) {
     console.error('Submit error:', e);
-    toast('❌ Submit failed: ' + e.message, 'error', 5000);
     toast('❌ Submit failed — check Firebase rules.', 'error', 5000);
   }
 }
@@ -945,7 +876,7 @@ function buildTeamSummaries(rawTeams) {
     if (!td || !td.entries) continue;
     const entries = Object.values(td.entries);
     if (!entries.length) continue;
-    const meta = td.meta || { teamName: SCENARIOS[i].team,  scenarioTitle: SCENARIOS[i].title };
+    const meta = td.meta || { teamName: SCENARIOS[i].team, scenarioTitle: SCENARIOS[i].title };
     const avgScore = entries.reduce((a, b) => a + (b.scores?.total || 0), 0) / entries.length;
     const avgCats  = entries.reduce((a, b) => a + (b.matchedCount || 0), 0) / entries.length;
     const avgCatScores = {}, hitCounts = {};
@@ -953,7 +884,7 @@ function buildTeamSummaries(rawTeams) {
       avgCatScores[k] = entries.reduce((a, b) => a + (b.scores?.[k] || 0), 0) / entries.length;
       hitCounts[k] = entries.filter(e => e.matchedCats?.[k]?.matched).length;
     }
-    summaries.push({ i, teamName: meta.teamName,  scenarioTitle: meta.scenarioTitle, emoji: SCENARIOS[i].emoji, n: entries.length, avgScore, avgCats, avgCatScores, hitCounts, lastPrompt: entries[entries.length - 1]?.prompt || '' });
+    summaries.push({ i, teamName: meta.teamName, scenarioTitle: meta.scenarioTitle, emoji: SCENARIOS[i].emoji, n: entries.length, avgScore, avgCats, avgCatScores, hitCounts, lastPrompt: entries[entries.length - 1]?.prompt || '' });
   }
   return summaries;
 }
@@ -1063,12 +994,11 @@ document.addEventListener('keydown', e => {
 });
 
 // ── BOOT ───────────────────────────────────────────────
-showScreen('Join'); // initFirebase() is called by SDK loader below
+showScreen('Join');
 </script>
 
 <!-- Firebase SDKs loaded last to guarantee availability -->
 <script>
-// Dynamic loader — ensures firebase is defined before init
 (function loadFirebase() {
   function loadScript(src, cb) {
     const s = document.createElement('script');
